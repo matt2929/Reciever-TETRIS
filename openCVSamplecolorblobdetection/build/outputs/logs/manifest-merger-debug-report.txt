@@ -56,14 +56,14 @@ ADDED from C:\Users\Matth\Downloads\color-blob-detection\openCVSamplecolorblobde
 	android:anyDensity
 		ADDED from C:\Users\Matth\Downloads\color-blob-detection\openCVSamplecolorblobdetection\src\main\AndroidManifest.xml:27:23-48
 uses-sdk
-ADDED from C:\Users\Matth\Downloads\color-blob-detection\openCVSamplecolorblobdetection\src\main\AndroidManifest.xml:29:5-73
+ADDED from C:\Users\Matth\Downloads\color-blob-detection\openCVSamplecolorblobdetection\src\main\AndroidManifest.xml:29:5-74
 MERGED from [color-blob-detection:openCVLibrary310:unspecified] C:\Users\Matth\Downloads\color-blob-detection\openCVLibrary310\build\intermediates\bundles\default\AndroidManifest.xml:7:5-9:41
 	android:targetSdkVersion
-		ADDED from C:\Users\Matth\Downloads\color-blob-detection\openCVSamplecolorblobdetection\src\main\AndroidManifest.xml:29:41-70
+		ADDED from C:\Users\Matth\Downloads\color-blob-detection\openCVSamplecolorblobdetection\src\main\AndroidManifest.xml:29:42-71
 		INJECTED from C:\Users\Matth\Downloads\color-blob-detection\openCVSamplecolorblobdetection\src\main\AndroidManifest.xml
 		INJECTED from C:\Users\Matth\Downloads\color-blob-detection\openCVSamplecolorblobdetection\src\main\AndroidManifest.xml
 	android:minSdkVersion
-		ADDED from C:\Users\Matth\Downloads\color-blob-detection\openCVSamplecolorblobdetection\src\main\AndroidManifest.xml:29:15-40
+		ADDED from C:\Users\Matth\Downloads\color-blob-detection\openCVSamplecolorblobdetection\src\main\AndroidManifest.xml:29:15-41
 		INJECTED from C:\Users\Matth\Downloads\color-blob-detection\openCVSamplecolorblobdetection\src\main\AndroidManifest.xml
 		INJECTED from C:\Users\Matth\Downloads\color-blob-detection\openCVSamplecolorblobdetection\src\main\AndroidManifest.xml
 uses-permission#android.permission.CAMERA

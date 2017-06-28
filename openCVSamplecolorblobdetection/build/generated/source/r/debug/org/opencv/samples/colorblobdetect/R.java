@@ -42,13 +42,16 @@ containing a value of this type.
     public static final class id {
         public static final int any=0x7f050000;
         public static final int back=0x7f050001;
-        public static final int checkBox=0x7f050006;
+        public static final int bottomLeft=0x7f050009;
+        public static final int bottomRight=0x7f050007;
         public static final int color_blob_detection_activity_surface_view=0x7f050003;
+        public static final int cornerDrawing=0x7f050004;
         public static final int front=0x7f050002;
-        public static final int linearLayout=0x7f050004;
-        public static final int minContourSeek=0x7f050005;
-        public static final int seekBarHeight=0x7f050008;
-        public static final int seekBarWidth=0x7f050007;
+        public static final int space=0x7f050006;
+        public static final int space2=0x7f050005;
+        public static final int topLeft=0x7f05000b;
+        public static final int topRight=0x7f05000a;
+        public static final int view=0x7f050008;
     }
     public static final class layout {
         public static final int color_blob_detection_surface_view=0x7f030000;

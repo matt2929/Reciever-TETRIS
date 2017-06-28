@@ -4,93 +4,65 @@
     android:layout_height="match_parent" >
 
     <org.opencv.android.JavaCameraView
+        android:id="@+id/color_blob_detection_activity_surface_view"
         android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
-        android:id="@+id/color_blob_detection_activity_surface_view" />
+        android:layout_height="fill_parent" />
 
-    <LinearLayout
+    <RelativeLayout
+        android:id="@+id/cornerDrawing"
         android:layout_width="match_parent"
-        android:layout_height="100dp"
-        android:layout_alignParentBottom="true"
-        android:orientation="horizontal"
-        android:weightSum="1"
-        android:id="@+id/linearLayout"
-       >
+        android:layout_height="match_parent"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentLeft="true">
 
-        <LinearLayout
-            android:layout_width="0dip"
+        <Space
+            android:id="@+id/space2"
+            android:layout_width="1dp"
             android:layout_height="match_parent"
-            android:layout_alignParentBottom="true"
-            android:layout_weight=".5"
-            android:weightSum="4"
-            android:orientation="vertical">
+            android:layout_centerHorizontal="true" />
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="0dip"
-                android:layout_weight="1"
-                android:text="Threshold Inverse" />
+        <Space
+            android:id="@+id/space"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_centerHorizontal="false"
+            android:layout_centerVertical="true" />
 
-            <SeekBar
-                android:id="@+id/minContourSeek"
-                android:layout_width="match_parent"
-                android:layout_height="0dip"
-                android:layout_weight="1"
-                android:max="255"
-                android:progress="10" />
+        <view
+            android:id="@+id/bottomRight"
+            class="org.opencv.samples.colorblobdetect.TargetView"
+            id="@+id/view"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:layout_alignTop="@+id/space"
+            android:layout_toRightOf="@+id/space2" />
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="0dip"
-                android:layout_weight="1"
-                android:text="gaussian?" />
+        <view
+            android:id="@+id/bottomLeft"
+            class="org.opencv.samples.colorblobdetect.TargetView"
+            id="@+id/view"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:layout_alignTop="@+id/space"
+            android:layout_toLeftOf="@+id/space2" />
 
-            <CheckBox
-                android:id="@+id/checkBox"
-                android:layout_width="match_parent"
-                android:layout_height="0dip"
-                android:layout_weight="1"
-                />
+        <view
+            android:id="@+id/topRight"
+            class="org.opencv.samples.colorblobdetect.TargetView"
+            id="@+id/view"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:layout_above="@+id/space"
+            android:layout_toRightOf="@+id/space2" />
 
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="0dip"
-            android:layout_height="match_parent"
-            android:layout_alignParentBottom="true"
-            android:layout_weight=".5"
-            android:weightSum="4"
-            android:orientation="vertical">
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="0dip"
-                android:layout_weight="1"
-                android:text="Width" />
-
-            <SeekBar
-                android:id="@+id/seekBarWidth"
-                android:layout_width="match_parent"
-                android:layout_height="0dip"
-                android:layout_weight="1"
-                android:max="255"
-                android:progress="10" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="0dip"
-                android:layout_weight="1"
-                android:text="Height" />
-
-            <SeekBar
-                android:id="@+id/seekBarHeight"
-                android:layout_width="match_parent"
-                android:layout_height="0dip"
-                android:layout_weight="1"
-          />
-
-        </LinearLayout>
-
-    </LinearLayout>
+        <view
+            android:id="@+id/topLeft"
+            class="org.opencv.samples.colorblobdetect.TargetView"
+            id="@+id/view"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:layout_alignBottom="@+id/space"
+            android:layout_alignLeft="@+id/bottomLeft" />
+    </RelativeLayout>
 
 </RelativeLayout>
