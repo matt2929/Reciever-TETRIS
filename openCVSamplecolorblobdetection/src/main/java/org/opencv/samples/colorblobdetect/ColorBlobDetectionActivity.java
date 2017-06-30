@@ -9,7 +9,9 @@ import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
+import org.opencv.core.KeyPoint;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfKeyPoint;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.Point;
 import org.opencv.core.Rect;
@@ -17,6 +19,7 @@ import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewListener2;
+import org.opencv.features2d.FeatureDetector;
 import org.opencv.imgproc.Imgproc;
 
 import android.annotation.TargetApi;
@@ -33,6 +36,8 @@ import android.view.WindowManager;
 import android.view.View.OnTouchListener;
 import android.view.SurfaceView;
 import android.widget.SeekBar;
+
+import static org.opencv.features2d.Features2d.drawKeypoints;
 
 public class ColorBlobDetectionActivity extends Activity implements OnTouchListener, CvCameraViewListener2 {
     private static final String TAG = "OCVSample::Activity";
@@ -215,7 +220,7 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
         topRightTarget.SetUp(Color.RED, "TR");
         bottomLeftTarget.SetUp(Color.GREEN, "BL");
         bottomRightTarget.SetUp(Color.BLUE, "BR");
-       }
+    }
 
     @Override
     public void onPause() {
@@ -306,88 +311,28 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
     }
 
     public Mat onCameraFrame(CvCameraViewFrame inputFrame) {
-        mRgbaGr = inputFrame.rgba();
-        int sqr1x, sqr1y, sqr2x, sqr2y;
+        mRgbaGr = inputFrame.gray().clone();
         Scalar blueHSV, greenHSV, redHSV;
-        float[] tempf = new float[3];
-        double[] tempd = new double[3];
+        Scalar blueRGB, greenRGB, redRGB;
+
         width = mRgbaGr.width();
         height = mRgbaGr.height();
         greenHSV = new Scalar(85.234375, 254.765625, 181.890625, 0.0);
         redHSV = new Scalar(1.53125, 255.0, 195.640625, 0.0);
         blueHSV = new Scalar(171.0, 255.0, 172.875, 0.0);
-
-        int widthOffset = widthBox;
-        int heightOffset = heightBox;
-        mRgbaGr.width();
-        mRgbaGr.height();
-        Point TopLeft = conversion(new Point(topLeftTarget.getX() + topLeftTarget.getWidth(), topLeftTarget.getY() + topLeftTarget.getHeight()));
-        Point TopRight = conversion(new Point(topRightTarget.getX() + topRightTarget.getWidth(), topRightTarget.getY() + topRightTarget.getHeight()));
-        Point BottomLeft = conversion(new Point(bottomLeftTarget.getX() + bottomLeftTarget.getWidth(), bottomLeftTarget.getY() + bottomLeftTarget.getHeight()));
-        Point BottomRight = conversion(new Point(bottomRightTarget.getX() + bottomRightTarget.getWidth(), bottomRightTarget.getY() + bottomRightTarget.getHeight()));
-
-        Point TopLeftM = conversion(new Point(topLeftTarget.getX(), topLeftTarget.getY()));
-        Point TopRightM = conversion(new Point(topRightTarget.getX(), topRightTarget.getY()));
-        Point BottomLeftM = conversion(new Point(bottomLeftTarget.getX(), bottomLeftTarget.getY()));
-        Point BottomRightM = conversion(new Point(bottomRightTarget.getX(), bottomRightTarget.getY()));
-
-        List<MatOfPoint> contours = new ArrayList<>();
-
-        mDetector.setHsvColor(blueHSV);
-        mDetector.process(mRgbaGr, TopLeftM, TopLeft);
-        contours.addAll(mDetector.getContours());
-        Point pTopLeft = mDetector.centerAverage();
-
-        mDetector.setHsvColor(redHSV);
-        mDetector.process(mRgbaGr, TopRightM, TopRight);
-        contours.addAll(mDetector.getContours());
-        Point pTopRight = mDetector.centerAverage();
-
-        mDetector.setHsvColor(greenHSV);
-        mDetector.process(mRgbaGr, BottomLeftM, BottomLeft);
-        contours.addAll(mDetector.getContours());
-        Point pBottomLeft = mDetector.centerAverage();
-
-
-        mDetector.setHsvColor(blueHSV);
-        mDetector.process(mRgbaGr, BottomRightM, BottomRight);
-        contours.addAll(mDetector.getContours());
-        Point pBottomRight = mDetector.centerAverage();
-
-
-        Log.e(TAG, "Contours count: " + contours.size());
-        Imgproc.drawContours(mRgbaGr, contours, -1, CONTOUR_COLOR, 7);
-
-      /*  Imgproc.line(mRgbaGr, TopLeftM, BottomLeftM, new Scalar(0, 0, 0), 5);
-        Imgproc.line(mRgbaGr, TopLeftM, TopRightM, new Scalar(0, 0, 0), 5);
-        Imgproc.line(mRgbaGr, TopRightM, BottomRightM, new Scalar(0, 0, 0), 5);
-        Imgproc.line(mRgbaGr, BottomLeftM, BottomRightM, new Scalar(0, 0, 0), 5);
-*/
-        Imgproc.rectangle(mRgbaGr, TopLeftM, TopLeft, new Scalar(12, 28, 181), 5);
-        Imgproc.rectangle(mRgbaGr, TopRightM, TopRight, new Scalar(162, 0, 0), 5);
-        Imgproc.rectangle(mRgbaGr, BottomLeft, BottomLeftM, new Scalar(26, 173, 18), 5);
-        Imgproc.rectangle(mRgbaGr, BottomRight, BottomRightM, new Scalar(12, 28, 181), 5);
-
-        Imgproc.circle(mRgbaGr, pTopLeft, 10, new Scalar(255, 21, 255), 5);
-        Imgproc.circle(mRgbaGr, pTopRight, 10, new Scalar(255, 21, 255), 5);
-        Imgproc.circle(mRgbaGr, pBottomLeft, 10, new Scalar(255, 21, 255), 5);
-        Imgproc.circle(mRgbaGr, pBottomRight, 10, new Scalar(255, 21, 255), 5);
-
-        Imgproc.line(mRgbaGr, pTopLeft, pTopRight, new Scalar(117, 210, 173), 5);
-        Imgproc.line(mRgbaGr, pTopLeft, pBottomLeft, new Scalar(117, 210, 173), 5);
-        Imgproc.line(mRgbaGr, pBottomLeft, pBottomRight, new Scalar(117, 210, 173), 5);
-        Imgproc.line(mRgbaGr, pTopRight, pBottomRight, new Scalar(117, 210, 173), 5);
-
+        greenRGB = new Scalar(0, 255, 0, 0.0);
+        redRGB = new Scalar(255, 0, 0, 0.0);
+        blueRGB = new Scalar(0, 0, 255, 0.0);
+        MatOfKeyPoint matOfPoint = new MatOfKeyPoint();
+        Imgproc.threshold(mRgbaGr,mRgbaGr,50,255,Imgproc.THRESH_BINARY);
+        FeatureDetector blobDetector = FeatureDetector.create(FeatureDetector.GRID_FAST);
+        blobDetector.detect(mRgbaGr, matOfPoint);
+        mRgbaGr=inputFrame.rgba();
+        mRgbaGr.setTo(new Scalar(0,0,0,0));
+        for(KeyPoint kp:matOfPoint.toArray()){
+            Imgproc.circle(mRgbaGr,kp.pt,3,greenRGB,3);
+        }
         return mRgbaGr;
-    }
-
-    public Point conversion(Point p) {
-
-        DisplayMetrics metrics = getResources().getDisplayMetrics();
-        int real_x = (int) (p.x * width) / metrics.widthPixels;
-        int real_y = (int) (p.y * height) / metrics.heightPixels;
-        return (new Point(real_x, real_y));
-
     }
 
     private Scalar converScalarHsv2Rgba(Scalar hsvColor) {
@@ -395,7 +340,6 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
         Mat pointMatHsv = new Mat(1, 1, CvType.CV_8UC3, hsvColor);
         Imgproc.cvtColor(pointMatHsv, pointMatRgba, Imgproc.COLOR_HSV2RGB_FULL, 4);
         return new Scalar(pointMatRgba.get(0, 0));
-
     }
 
     public boolean inBounds(int x, int y, int width, int height) {
@@ -407,6 +351,5 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
         }
         return false;
     }
-
 
 }

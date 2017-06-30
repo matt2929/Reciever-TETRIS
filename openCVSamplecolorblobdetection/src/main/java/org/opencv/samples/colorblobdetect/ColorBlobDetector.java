@@ -9,9 +9,11 @@ import java.util.List;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfKeyPoint;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.Point;
 import org.opencv.core.Scalar;
+import org.opencv.features2d.FeatureDetector;
 import org.opencv.imgproc.Imgproc;
 
 import static android.content.ContentValues.TAG;
@@ -38,31 +40,34 @@ public class ColorBlobDetector {
         mColorRadius = radius;
     }
 
+
+
     public void setHsvColor(Scalar hsvColor) {
-        double minH = (hsvColor.val[0] >= mColorRadius.val[0]) ? hsvColor.val[0] - mColorRadius.val[0] : 0;
-        double maxH = (hsvColor.val[0] + mColorRadius.val[0] <= 255) ? hsvColor.val[0] + mColorRadius.val[0] : 255;
+        double minH = (hsvColor.val[0] >= mColorRadius.val[0]) ? hsvColor.val[0]-mColorRadius.val[0] : 0;
+        double maxH = (hsvColor.val[0]+mColorRadius.val[0] <= 255) ? hsvColor.val[0]+mColorRadius.val[0] : 255;
 
-        mLowerBound.val[0] = 0;//minH;
-        mUpperBound.val[0] = 180;//maxH;
+        mLowerBound.val[0] = minH;
+        mUpperBound.val[0] = maxH;
 
-        mLowerBound.val[1] = 0;//hsvColor.val[1] - mColorRadius.val[1];
-        mUpperBound.val[1] = 255;//hsvColor.val[1] + mColorRadius.val[1];
+        mLowerBound.val[1] = hsvColor.val[1] - mColorRadius.val[1];
+        mUpperBound.val[1] = hsvColor.val[1] + mColorRadius.val[1];
 
-        mLowerBound.val[2] = 0;//hsvColor.val[2] - mColorRadius.val[2];
-        mUpperBound.val[2] = 30;//hsvColor.val[2] + mColorRadius.val[2];
+        mLowerBound.val[2] = hsvColor.val[2] - mColorRadius.val[2];
+        mUpperBound.val[2] = hsvColor.val[2] + mColorRadius.val[2];
 
         mLowerBound.val[3] = 0;
         mUpperBound.val[3] = 255;
 
-        Mat spectrumHsv = new Mat(1, (int) (maxH - minH), CvType.CV_8UC3);
+        Mat spectrumHsv = new Mat(1, (int)(maxH-minH), CvType.CV_8UC3);
 
-        for (int j = 0; j < maxH - minH; j++) {
-            byte[] tmp = {(byte) (minH + j), (byte) 255, (byte) 255};
+        for (int j = 0; j < maxH-minH; j++) {
+            byte[] tmp = {(byte)(minH+j), (byte)255, (byte)255};
             spectrumHsv.put(0, j, tmp);
         }
 
         Imgproc.cvtColor(spectrumHsv, mSpectrum, Imgproc.COLOR_HSV2RGB_FULL, 4);
     }
+
 
     public Mat getSpectrum() {
         return mSpectrum;
@@ -72,13 +77,14 @@ public class ColorBlobDetector {
         mMinContourArea = area;
     }
 
-    public void process(Mat rgbaImage, Point point1, Point point2) {
-        Mat mat = rgbaImage.submat((int) Math.min(point1.y, point2.y), (int) Math.max(point1.y, point2.y), (int) Math.min(point1.x, point2.x), (int) Math.max(point1.x, point2.x));
-        Imgproc.pyrDown(mat, mPyrDownMat);
+    public void process(Mat rgbaImage) {
+        MatOfKeyPoint matOfPoint=new MatOfKeyPoint();
+        Imgproc.pyrDown(rgbaImage, mPyrDownMat);
         Imgproc.pyrDown(mPyrDownMat, mPyrDownMat);
-
         Imgproc.cvtColor(mPyrDownMat, mHsvMat, Imgproc.COLOR_RGB2HSV_FULL);
 
+        FeatureDetector blobDetector = FeatureDetector.create(FeatureDetector.GRID_FAST);
+        blobDetector.detect(rgbaImage,matOfPoint);
         Core.inRange(mHsvMat, mLowerBound, mUpperBound, mMask);
         Imgproc.dilate(mMask, mDilatedMask, new Mat());
 
@@ -104,7 +110,7 @@ public class ColorBlobDetector {
             MatOfPoint contour = each.next();
             if (Imgproc.contourArea(contour) > mMinContourArea * maxArea) {
                 Core.multiply(contour, new Scalar(4, 4), contour);
-                contour=translateMatOfPoints(contour,new Point((int) Math.min(point1.x, point2.x),(int) Math.min(point1.y, point2.y)));
+                //contour=translateMatOfPoints(contour,new Point((int) Math.min(point1.x, point2.x),(int) Math.min(point1.y, point2.y)));
                 mContours.add(contour);
             }
         }
