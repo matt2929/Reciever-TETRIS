@@ -9,17 +9,15 @@ import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
-import org.opencv.core.KeyPoint;
 import org.opencv.core.Mat;
-import org.opencv.core.MatOfKeyPoint;
 import org.opencv.core.MatOfPoint;
+import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
 import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewListener2;
-import org.opencv.features2d.FeatureDetector;
 import org.opencv.imgproc.Imgproc;
 
 import android.annotation.TargetApi;
@@ -36,8 +34,6 @@ import android.view.WindowManager;
 import android.view.View.OnTouchListener;
 import android.view.SurfaceView;
 import android.widget.SeekBar;
-
-import static org.opencv.features2d.Features2d.drawKeypoints;
 
 public class ColorBlobDetectionActivity extends Activity implements OnTouchListener, CvCameraViewListener2 {
     private static final String TAG = "OCVSample::Activity";
@@ -104,13 +100,10 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
             @Override
             public boolean onTouch(View view, MotionEvent event) {
                 switch (event.getAction()) {
-
                     case MotionEvent.ACTION_DOWN:
-
                         dXTL = view.getX() - event.getRawX();
                         dYTL = view.getY() - event.getRawY();
                         break;
-
                     case MotionEvent.ACTION_MOVE:
                         if (inBounds((int) event.getRawX() + (int) dXTL, (int) event.getRawY() + (int) dYTL, view.getWidth(), view.getHeight())) {
                             view.animate()
@@ -132,13 +125,10 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
             @Override
             public boolean onTouch(View view, MotionEvent event) {
                 switch (event.getAction()) {
-
                     case MotionEvent.ACTION_DOWN:
-
                         dXTR = view.getX() - event.getRawX();
                         dYTR = view.getY() - event.getRawY();
                         break;
-
                     case MotionEvent.ACTION_MOVE:
                         if (inBounds((int) event.getRawX() + (int) dXTR, (int) event.getRawY() + (int) dYTR, view.getWidth(), view.getHeight())) {
 
@@ -155,7 +145,6 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
                 return true;
             }
         });
-
         bottomRightTarget = (TargetView) findViewById(R.id.bottomRight);
         bottomRightTarget.setOnTouchListener(new OnTouchListener() {
             @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR1)
@@ -168,7 +157,6 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
                         dXBR = view.getX() - event.getRawX();
                         dYBR = view.getY() - event.getRawY();
                         break;
-
                     case MotionEvent.ACTION_MOVE:
                         if (inBounds((int) event.getRawX() + (int) dXBR, (int) event.getRawY() + (int) dYBR, view.getWidth(), view.getHeight())) {
 
@@ -192,13 +180,10 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
             @Override
             public boolean onTouch(View view, MotionEvent event) {
                 switch (event.getAction()) {
-
                     case MotionEvent.ACTION_DOWN:
-
                         dXBL = view.getX() - event.getRawX();
                         dYBL = view.getY() - event.getRawY();
                         break;
-
                     case MotionEvent.ACTION_MOVE:
                         if (inBounds((int) event.getRawX() + (int) dXBL, (int) event.getRawY() + (int) dYBL, view.getWidth(), view.getHeight())) {
 
@@ -311,28 +296,214 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
     }
 
     public Mat onCameraFrame(CvCameraViewFrame inputFrame) {
-        mRgbaGr = inputFrame.gray().clone();
+        mRgbaGr = inputFrame.rgba();
         Scalar blueHSV, greenHSV, redHSV;
-        Scalar blueRGB, greenRGB, redRGB;
-
         width = mRgbaGr.width();
         height = mRgbaGr.height();
         greenHSV = new Scalar(85.234375, 254.765625, 181.890625, 0.0);
         redHSV = new Scalar(1.53125, 255.0, 195.640625, 0.0);
         blueHSV = new Scalar(171.0, 255.0, 172.875, 0.0);
-        greenRGB = new Scalar(0, 255, 0, 0.0);
-        redRGB = new Scalar(255, 0, 0, 0.0);
-        blueRGB = new Scalar(0, 0, 255, 0.0);
-        MatOfKeyPoint matOfPoint = new MatOfKeyPoint();
-        Imgproc.threshold(mRgbaGr,mRgbaGr,50,255,Imgproc.THRESH_BINARY);
-        FeatureDetector blobDetector = FeatureDetector.create(FeatureDetector.GRID_FAST);
-        blobDetector.detect(mRgbaGr, matOfPoint);
-        mRgbaGr=inputFrame.rgba();
-        mRgbaGr.setTo(new Scalar(0,0,0,0));
-        for(KeyPoint kp:matOfPoint.toArray()){
-            Imgproc.circle(mRgbaGr,kp.pt,3,greenRGB,3);
+
+        mRgbaGr.width();
+        mRgbaGr.height();
+
+        Point TopLeft = conversion(new Point(topLeftTarget.getX() + topLeftTarget.getWidth(), topLeftTarget.getY() + topLeftTarget.getHeight()));
+        Point TopRight = conversion(new Point(topRightTarget.getX() + topRightTarget.getWidth(), topRightTarget.getY() + topRightTarget.getHeight()));
+        Point BottomLeft = conversion(new Point(bottomLeftTarget.getX() + bottomLeftTarget.getWidth(), bottomLeftTarget.getY() + bottomLeftTarget.getHeight()));
+        Point BottomRight = conversion(new Point(bottomRightTarget.getX() + bottomRightTarget.getWidth(), bottomRightTarget.getY() + bottomRightTarget.getHeight()));
+
+        Point TopLeftM = conversion(new Point(topLeftTarget.getX(), topLeftTarget.getY()));
+        Point TopRightM = conversion(new Point(topRightTarget.getX(), topRightTarget.getY()));
+        Point BottomLeftM = conversion(new Point(bottomLeftTarget.getX(), bottomLeftTarget.getY()));
+        Point BottomRightM = conversion(new Point(bottomRightTarget.getX(), bottomRightTarget.getY()));
+
+        Point pTopLeft = getCenterBlack(mRgbaGr, TopLeft, TopLeftM, blueHSV);
+        Point pTopRight = getCenterBlack(mRgbaGr, TopRight, TopRightM, redHSV);
+        Point pBottomLeft = getCenterBlack(mRgbaGr, BottomLeft, BottomLeftM, greenHSV);
+        Point pBottomRight = getCenterBlack(mRgbaGr, BottomRight, BottomRightM, blueHSV);
+
+        List<Point> topLine = new ArrayList<Point>();
+        List<Point> bottomLine = new ArrayList<Point>();
+        List<Point> leftLine = new ArrayList<Point>();
+        List<Point> rightLine = new ArrayList<Point>();
+
+        if (pTopLeft.x != -100 && pTopRight.x != -100 && pBottomLeft.x != -100 && pBottomRight.x != -100) {
+            bottomLine = findTimingHorizontal(mRgbaGr, pTopLeft, pTopRight);
+            topLine = findTimingHorizontal(mRgbaGr, pBottomLeft, pBottomRight);
+            leftLine = findTimingVerticle(mRgbaGr, pTopLeft,pBottomLeft);
+            rightLine = findTimingVerticle(mRgbaGr, pTopRight,pBottomRight);
+        }
+        Imgproc.rectangle(mRgbaGr, TopLeftM, TopLeft, new Scalar(12, 28, 181), 5);
+        Imgproc.rectangle(mRgbaGr, TopRightM, TopRight, new Scalar(162, 0, 0), 5);
+        Imgproc.rectangle(mRgbaGr, BottomLeft, BottomLeftM, new Scalar(26, 173, 18), 5);
+        Imgproc.rectangle(mRgbaGr, BottomRight, BottomRightM, new Scalar(12, 28, 181), 5);
+
+        Imgproc.circle(mRgbaGr, pTopLeft, 10, new Scalar(255, 21, 255), 5);
+        Imgproc.circle(mRgbaGr, pTopRight, 10, new Scalar(255, 21, 255), 5);
+        Imgproc.circle(mRgbaGr, pBottomLeft, 10, new Scalar(255, 21, 255), 5);
+        Imgproc.circle(mRgbaGr, pBottomRight, 10, new Scalar(255, 21, 255), 5);
+
+        Imgproc.line(mRgbaGr, pTopLeft, pTopRight, new Scalar(117, 210, 173), 5);
+        Imgproc.line(mRgbaGr, pTopLeft, pBottomLeft, new Scalar(117, 210, 173), 5);
+        Imgproc.line(mRgbaGr, pBottomLeft, pBottomRight, new Scalar(117, 210, 173), 5);
+        Imgproc.line(mRgbaGr, pTopRight, pBottomRight, new Scalar(117, 210, 173), 5);
+
+        for (Point p : topLine) {
+            Imgproc.circle(mRgbaGr, p, 10, new Scalar(23, 255, 143, 255), 5);
+        }
+        for (Point p : bottomLine) {
+            Imgproc.circle(mRgbaGr, p, 10, new Scalar(23, 255, 143, 255), 5);
+        }
+        for (Point p : leftLine) {
+            Imgproc.circle(mRgbaGr, p, 10, new Scalar(23, 255, 143, 255), 5);
+        }
+        for (Point p : rightLine) {
+            Imgproc.circle(mRgbaGr, p, 10, new Scalar(23, 255, 143, 255), 5);
         }
         return mRgbaGr;
+    }
+
+    public Point getCenterBlack(Mat mRgbaGr, Point point1, Point point2, Scalar color) {
+        List<MatOfPoint> contours = new ArrayList<>();
+        mDetector.setHsvColor(color);
+        MatOfPoint matOfPointMax = null;
+        if (mDetector.process(mRgbaGr, point1, point2)) {
+            List<MatOfPoint> matOfPointList = mDetector.getContours();
+            double areaMax = -1.0;
+            for (MatOfPoint matOfPoint : matOfPointList) {
+                double areaT = Imgproc.contourArea(matOfPoint);
+                if (areaT > areaMax) {
+                    matOfPointMax = matOfPoint;
+                }
+            }
+        }
+        contours.clear();
+        contours.add(matOfPointMax);
+        if (matOfPointMax != null) {
+            mDetector.setHsvBlack(color);
+            MatOfPoint2f NewMtx = new MatOfPoint2f(matOfPointMax.toArray());
+            Rect rect = Imgproc.minAreaRect(NewMtx).boundingRect();
+            mDetector.process(mRgbaGr, rect.tl(), rect.br());
+        }
+        return mDetector.centerAverage();
+    }
+
+    public List<Point> findTimingHorizontal(Mat mat, Point start, Point end) {
+        List<Point> points = new ArrayList<>();
+        double rise = start.y - end.y;
+        double run = start.x - end.y;
+        int curentY = (int) start.y;
+        int startBlack = -1;
+        rise = run / rise;
+        int count = 0;
+        // Log.e("Trace:", "From (" + start.x + ", " + start.y + ") To (" + end.x + ", " + end.y + ")");
+        for (int i = (int) (start.x); i < (end.x + .5); i++) {
+            if (rise != 0) {
+                if (count == rise) {
+                    if(rise<0) {
+                        curentY++;
+                    }else {
+                        curentY--;
+                    }
+                }
+            }
+            double[] point = mat.get(curentY, i);
+            Log.e("coordinate", "Coor: (" + i + ", " + curentY + ")");
+            if (checkBlack(point)) {
+                if (startBlack == -1) {
+                    startBlack = i;
+                } else {
+
+                }
+            } else {
+                if (startBlack == -1) {
+
+                } else {
+                    points.add(new Point((startBlack + ((i - startBlack) / 2)), curentY));
+                    startBlack = -1;
+                }
+            }
+            count++;
+        }
+        return points;
+    }
+
+
+    public List<Point> findTimingVerticle(Mat mat, Point start, Point end) {
+        List<Point> points = new ArrayList<>();
+        double rise = start.y - end.y;
+        double run = start.x - end.y;
+        int currentX = (int) start.x;
+        int startBlack = -1;
+        run = rise / run;
+        int count = 0;
+        // Log.e("Trace:", "From (" + start.x + ", " + start.y + ") To (" + end.x + ", " + end.y + ")");
+        for (int i = (int) (start.y); i < (end.y + .5); i++) {
+            if (run != 0) {
+                if (count == run) {
+                    if(run<0) {
+                        currentX++;
+                    }else {
+                        currentX--;
+                    }
+                }
+            }
+            double[] point = mat.get(currentX, i);
+            Log.e("coordinate", "Coor: (" + i + ", " + currentX + ")");
+            if (checkBlack(point)) {
+                if (startBlack == -1) {
+                    startBlack = i;
+                } else {
+
+                }
+            } else {
+                if (startBlack == -1) {
+
+                } else {
+                    points.add(new Point((startBlack + ((i - startBlack) / 2)), currentX));
+                    startBlack = -1;
+                }
+            }
+            count++;
+        }
+        return points;
+    }
+
+
+    public boolean checkBlack(double[] d) {
+        if (d.length == 4) {
+            double[] valMin = new double[4];
+            double[] valMax = new double[4];
+
+            valMin[0] = 0;//minH;
+            valMax[0] = 180;//maxH;
+            valMin[1] = 0;//hsvColor.val[1] - mColorRadius.val[1];
+            valMax[1] = 255;//hsvColor.val[1] + mColorRadius.val[1];
+            valMin[2] = 0;//hsvColor.val[2] - mColorRadius.val[2];
+            valMax[2] = 30;//hsvColor.val[2] + mColorRadius.val[2];
+            valMin[3] = 0;
+            valMax[3] = 255;
+
+            for (int i = 0; i < 4; i++) {
+                if (valMin[i] <= d[i] && valMax[i] >= d[i]) {
+
+                } else {
+                    return false;
+                }
+            }
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public Point conversion(Point p) {
+
+        DisplayMetrics metrics = getResources().getDisplayMetrics();
+        int real_x = (int) (p.x * width) / metrics.widthPixels;
+        int real_y = (int) (p.y * height) / metrics.heightPixels;
+        return (new Point(real_x, real_y));
+
     }
 
     private Scalar converScalarHsv2Rgba(Scalar hsvColor) {
@@ -340,6 +511,7 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
         Mat pointMatHsv = new Mat(1, 1, CvType.CV_8UC3, hsvColor);
         Imgproc.cvtColor(pointMatHsv, pointMatRgba, Imgproc.COLOR_HSV2RGB_FULL, 4);
         return new Scalar(pointMatRgba.get(0, 0));
+
     }
 
     public boolean inBounds(int x, int y, int width, int height) {
@@ -351,5 +523,6 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
         }
         return false;
     }
+
 
 }
