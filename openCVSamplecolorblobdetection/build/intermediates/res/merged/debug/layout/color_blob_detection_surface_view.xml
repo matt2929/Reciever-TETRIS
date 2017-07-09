@@ -32,8 +32,8 @@
             android:id="@+id/bottomRight"
             class="org.opencv.samples.colorblobdetect.TargetView"
             id="@+id/view"
-            android:layout_width="60dp"
-            android:layout_height="60dp"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
             android:layout_alignTop="@+id/space"
             android:layout_toRightOf="@+id/space2" />
 
@@ -41,8 +41,8 @@
             android:id="@+id/bottomLeft"
             class="org.opencv.samples.colorblobdetect.TargetView"
             id="@+id/view"
-            android:layout_width="60dp"
-            android:layout_height="60dp"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
             android:layout_alignTop="@+id/space"
             android:layout_toLeftOf="@+id/space2" />
 
@@ -50,8 +50,8 @@
             android:id="@+id/topRight"
             class="org.opencv.samples.colorblobdetect.TargetView"
             id="@+id/view"
-            android:layout_width="60dp"
-            android:layout_height="60dp"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
             android:layout_above="@+id/space"
             android:layout_toRightOf="@+id/space2" />
 
@@ -59,8 +59,8 @@
             android:id="@+id/topLeft"
             class="org.opencv.samples.colorblobdetect.TargetView"
             id="@+id/view"
-            android:layout_width="60dp"
-            android:layout_height="60dp"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
             android:layout_alignBottom="@+id/space"
             android:layout_alignLeft="@+id/bottomLeft" />
     </RelativeLayout>

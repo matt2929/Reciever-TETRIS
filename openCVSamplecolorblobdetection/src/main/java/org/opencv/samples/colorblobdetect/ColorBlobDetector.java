@@ -12,6 +12,7 @@ import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.Point;
 import org.opencv.core.Scalar;
+import org.opencv.features2d.FeatureDetector;
 import org.opencv.imgproc.Imgproc;
 
 import static android.content.ContentValues.TAG;
@@ -94,6 +95,7 @@ public class ColorBlobDetector {
     }
 
     public boolean process(Mat rgbaImage, Point point1, Point point2) {
+
         Mat mat = rgbaImage.submat((int) Math.min(point1.y, point2.y), (int) Math.max(point1.y, point2.y), (int) Math.min(point1.x, point2.x), (int) Math.max(point1.x, point2.x));
         Imgproc.pyrDown(mat, mPyrDownMat);
         Imgproc.pyrDown(mPyrDownMat, mPyrDownMat);
@@ -130,6 +132,12 @@ public class ColorBlobDetector {
         }else{
             return false;
         }
+    }
+
+    public void newProcess(Mat mat, Point point1, Point point2) {
+        Mat submat = mat.submat((int) Math.min(point1.y, point2.y), (int) Math.max(point1.y, point2.y), (int) Math.min(point1.x, point2.x), (int) Math.max(point1.x, point2.x));
+        FeatureDetector simple = FeatureDetector.create(FeatureDetector.SIMPLEBLOB);
+        simple.write("square.xml");
     }
     public static MatOfPoint translateMatOfPoints(MatOfPoint contour, Point translation)
     {
