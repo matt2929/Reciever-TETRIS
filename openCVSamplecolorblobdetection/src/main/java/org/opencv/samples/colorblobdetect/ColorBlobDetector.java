@@ -40,6 +40,7 @@ public class ColorBlobDetector {
     }
 
     public void setHsvBlack(Scalar hsvColor) {
+        //were looking for black color given doesnt matter but its easier if one is given trust me
         double minH = (hsvColor.val[0] >= mColorRadius.val[0]) ? hsvColor.val[0] - mColorRadius.val[0] : 0;
         double maxH = (hsvColor.val[0] + mColorRadius.val[0] <= 255) ? hsvColor.val[0] + mColorRadius.val[0] : 255;
         mLowerBound.val[0] = 0;//minH;
@@ -65,6 +66,7 @@ public class ColorBlobDetector {
 
 
     public void setHsvColor(Scalar hsvColor) {
+        //set custom color to look for
         double minH = (hsvColor.val[0] >= mColorRadius.val[0]) ? hsvColor.val[0]-mColorRadius.val[0] : 0;
         double maxH = (hsvColor.val[0]+mColorRadius.val[0] <= 255) ? hsvColor.val[0]+mColorRadius.val[0] : 255;
 
@@ -94,8 +96,9 @@ public class ColorBlobDetector {
         mMinContourArea = area;
     }
 
-    public boolean process(Mat rgbaImage, Point point1, Point point2) {
 
+    public boolean process(Mat rgbaImage, Point point1, Point point2) {
+//we finding contours
         Mat mat = rgbaImage.submat((int) Math.min(point1.y, point2.y), (int) Math.max(point1.y, point2.y), (int) Math.min(point1.x, point2.x), (int) Math.max(point1.x, point2.x));
         Imgproc.pyrDown(mat, mPyrDownMat);
         Imgproc.pyrDown(mPyrDownMat, mPyrDownMat);
@@ -132,12 +135,6 @@ public class ColorBlobDetector {
         }else{
             return false;
         }
-    }
-
-    public void newProcess(Mat mat, Point point1, Point point2) {
-        Mat submat = mat.submat((int) Math.min(point1.y, point2.y), (int) Math.max(point1.y, point2.y), (int) Math.min(point1.x, point2.x), (int) Math.max(point1.x, point2.x));
-        FeatureDetector simple = FeatureDetector.create(FeatureDetector.SIMPLEBLOB);
-        simple.write("square.xml");
     }
     public static MatOfPoint translateMatOfPoints(MatOfPoint contour, Point translation)
     {

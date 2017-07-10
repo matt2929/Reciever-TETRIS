@@ -45,19 +45,15 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
     private Scalar mBlobColorHsv;
     private ColorBlobDetector mDetector;
     private Mat mSpectrum;
+
+    //use view to hand select corners
     TargetView topLeftTarget;
     TargetView topRightTarget;
     TargetView bottomRightTarget;
     TargetView bottomLeftTarget;
     private Size SPECTRUM_SIZE;
-    private Scalar CONTOUR_COLOR;
-    private TargetView targetView;
-
     private CameraBridgeViewBase mOpenCvCameraView;
 
-    int widthBox = 1;
-    int heightBox = 1;
-    int buffer = 70;
     float dXTL, dYTL, dXTR, dYTR, dXBL, dYBL, dXBR, dYBR;
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
         @Override
@@ -95,6 +91,7 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
         mOpenCvCameraView = (CameraBridgeViewBase) findViewById(R.id.color_blob_detection_activity_surface_view);
         mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE);
         mOpenCvCameraView.setCvCameraViewListener(this);
+        //Tell target view what to do when you click on it -------------------------------------------------------------------------------------------------
         topLeftTarget = (TargetView) findViewById(R.id.topLeft);
         topLeftTarget.setOnTouchListener(new OnTouchListener() {
             @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR1)
@@ -200,10 +197,14 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
                 return true;
             }
         });
+        //Tell target view what to do when you click on it -------------------------------------------------------------------------------------------------
+
+        //Set color and text value of target view
         topLeftTarget.SetUp(Color.BLUE, "TL");
         topRightTarget.SetUp(Color.RED, "TR");
         bottomLeftTarget.SetUp(Color.GREEN, "BL");
         bottomRightTarget.SetUp(Color.BLUE, "BR");
+        //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     }
 
     @Override
@@ -238,7 +239,6 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
         mBlobColorRgba = new Scalar(255);
         mBlobColorHsv = new Scalar(255);
         SPECTRUM_SIZE = new Size(200, 64);
-        CONTOUR_COLOR = new Scalar(2255, 255, 0, 255);
     }
 
     public void onCameraViewStopped() {
@@ -246,6 +246,7 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
     }
 
     public boolean onTouch(View v, MotionEvent event) {
+    //this currently does nothing
         int cols = mRgbaGr.cols();
         int rows = mRgbaGr.rows();
 
@@ -290,60 +291,63 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
 
         touchedRegionRgba.release();
         touchedRegionHsv.release();
-
         return false; // don't need subsequent touch events
     }
 
     public Mat onCameraFrame(CvCameraViewFrame inputFrame) {
+        //this is the frame we want it in RGBA
         mRgbaGr = inputFrame.rgba();
-        Scalar blueHSV, greenHSV, redHSV;
-        width = mRgbaGr.width();
+        Scalar blueHSV, greenHSV, redHSV; // our hard coded colors to detect
+        width = mRgbaGr.width(); // what is the width and height of frame
         height = mRgbaGr.height();
-        greenHSV = new Scalar(85.234375, 254.765625, 181.890625, 0.0);
+        greenHSV = new Scalar(85.234375, 254.765625, 181.890625, 0.0);//dat harcoding TODO:check validity of these values
         redHSV = new Scalar(1.53125, 255.0, 195.640625, 0.0);
         blueHSV = new Scalar(171.0, 255.0, 172.875, 0.0);
 
-        mRgbaGr.width();
-        mRgbaGr.height();
-
+        //Grab bottom right point of target view and convert it as the resolution of the camera picture and the phone screen could be different
         Point TopLeft = conversion(new Point(topLeftTarget.getX() + topLeftTarget.getWidth(), topLeftTarget.getY() + topLeftTarget.getHeight()));
         Point TopRight = conversion(new Point(topRightTarget.getX() + topRightTarget.getWidth(), topRightTarget.getY() + topRightTarget.getHeight()));
         Point BottomLeft = conversion(new Point(bottomLeftTarget.getX() + bottomLeftTarget.getWidth(), bottomLeftTarget.getY() + bottomLeftTarget.getHeight()));
         Point BottomRight = conversion(new Point(bottomRightTarget.getX() + bottomRightTarget.getWidth(), bottomRightTarget.getY() + bottomRightTarget.getHeight()));
 
+        //Grab top left do same coversion
         Point TopLeftM = conversion(new Point(topLeftTarget.getX(), topLeftTarget.getY()));
         Point TopRightM = conversion(new Point(topRightTarget.getX(), topRightTarget.getY()));
         Point BottomLeftM = conversion(new Point(bottomLeftTarget.getX(), bottomLeftTarget.getY()));
         Point BottomRightM = conversion(new Point(bottomRightTarget.getX(), bottomRightTarget.getY()));
 
+        //run the algorithm to find the center of the black region in the corner
         Point pTopLeft = getCenterBlack(mRgbaGr, TopLeft, TopLeftM, blueHSV);
         Point pTopRight = getCenterBlack(mRgbaGr, TopRight, TopRightM, redHSV);
         Point pBottomLeft = getCenterBlack(mRgbaGr, BottomLeft, BottomLeftM, greenHSV);
         Point pBottomRight = getCenterBlack(mRgbaGr, BottomRight, BottomRightM, blueHSV);
 
+        //this is where we will save our timing block points
         List<Point> topLine = new ArrayList<Point>();
         List<Point> bottomLine = new ArrayList<Point>();
         List<Point> leftLine = new ArrayList<Point>();
         List<Point> rightLine = new ArrayList<Point>();
 
-        if (pTopLeft.x != -100 && pTopRight.x != -100 && pBottomLeft.x != -100 && pBottomRight.x != -100) {
+        if (pTopLeft.x != -100 && pTopRight.x != -100 && pBottomLeft.x != -100 && pBottomRight.x != -100) {//AKA only if we found four corner points do we continue
+                //we automaticaly readjust where the target views are centered but only if we dont move them of screen cuz that crashes app :''( ; therefore, safe move
                 safeMove(topLeftTarget,conversionX(pTopLeft.x) - (topLeftTarget.getWidth() / 2),(conversionY(pTopLeft.y)) - (topLeftTarget.getWidth() / 2));
                 safeMove(topRightTarget,conversionX(pTopRight.x) - (topLeftTarget.getWidth() / 2),conversionY(pTopRight.y) - (topLeftTarget.getWidth() / 2));
                 safeMove(bottomLeftTarget,conversionX(pBottomLeft.x) - (topLeftTarget.getWidth() / 2),conversionY(pBottomLeft.y) - (topLeftTarget.getWidth() / 2));
                 safeMove(bottomRightTarget,conversionX(pBottomRight.x) - (topLeftTarget.getWidth() / 2),conversionY(pBottomRight.y) - (topLeftTarget.getWidth() / 2));
-
+            //find those timing son
             bottomLine = findTimingHorizontal(mRgbaGr, pTopLeft, pTopRight);
             topLine = findTimingHorizontal(mRgbaGr, pBottomLeft, pBottomRight);
             leftLine = findTimingVerticle(mRgbaGr, pTopLeft, pBottomLeft);
             rightLine = findTimingVerticle(mRgbaGr, pTopRight, pBottomRight);
         }
-        if(bottomLine.size()==topLine.size()&&leftLine.size()==rightLine.size()){
+        if(bottomLine.size()==topLine.size()&&leftLine.size()==rightLine.size()){//if the amount of timing blocks located are consistent per orientation continue else cry
             innerGrid.clear();
             for(int y=0;y<leftLine.size();y++){
                 for(int x=0;x<topLine.size();x++){
+                    //watch your step line intersect equation below
+                    //this is where we draw every point that lies on the matrix of colors
                     double slope1=(leftLine.get(y).y-rightLine.get(y).y)/(leftLine.get(y).x-rightLine.get(y).x);
                     double yIntercept1 = leftLine.get(y).y-(slope1*leftLine.get(y).x);
-
                     double slope2=(topLine.get(x).y-bottomLine.get(x).y)/(topLine.get(x).x-bottomLine.get(x).x);
                     double yIntercept2 = topLine.get(x).y-(slope2*topLine.get(x).x);
                     int xIntercept = (int)((yIntercept2-yIntercept1)/(slope1-slope2));
@@ -352,26 +356,31 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
                 }
             }
         }
-
+        /*
         Imgproc.rectangle(mRgbaGr, TopLeftM, TopLeft, new Scalar(12, 28, 181), 5);
         Imgproc.rectangle(mRgbaGr, TopRightM, TopRight, new Scalar(162, 0, 0), 5);
         Imgproc.rectangle(mRgbaGr, BottomLeft, BottomLeftM, new Scalar(26, 173, 18), 5);
         Imgproc.rectangle(mRgbaGr, BottomRight, BottomRightM, new Scalar(12, 28, 181), 5);
-
+*/
+        //draw pink points for center of corner
         Imgproc.circle(mRgbaGr, pTopLeft, 10, new Scalar(255, 21, 255), 5);
         Imgproc.circle(mRgbaGr, pTopRight, 10, new Scalar(255, 21, 255), 5);
         Imgproc.circle(mRgbaGr, pBottomLeft, 10, new Scalar(255, 21, 255), 5);
         Imgproc.circle(mRgbaGr, pBottomRight, 10, new Scalar(255, 21, 255), 5);
 
+        //draw lines that connect assumed corners
         Imgproc.line(mRgbaGr, pTopLeft, pTopRight, new Scalar(117, 210, 173), 5);
         Imgproc.line(mRgbaGr, pTopLeft, pBottomLeft, new Scalar(117, 210, 173), 5);
         Imgproc.line(mRgbaGr, pBottomLeft, pBottomRight, new Scalar(117, 210, 173), 5);
         Imgproc.line(mRgbaGr, pTopRight, pBottomRight, new Scalar(117, 210, 173), 5);
 
+        //draw all data center color points
         for(Point p : innerGrid){
             Imgproc.circle(mRgbaGr, p, 10, new Scalar(76, 123, 254, 255), 5);
         }
 
+
+        //draw timing points
         for (Point p : topLine) {
             Imgproc.circle(mRgbaGr, p, 10, new Scalar(23, 255, 143, 255), 5);
         }
@@ -384,6 +393,8 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
         for (Point p : rightLine) {
             Imgproc.circle(mRgbaGr, p, 10, new Scalar(23, 255, 143, 255), 5);
         }
+        //end timing points
+
         return mRgbaGr;
     }
 
@@ -444,21 +455,29 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
                 "\nSlope" + slope +
                 "\nY-intercept" + yIntercept);
         int getOutBlack = (int)start.x;
+        //while point is black keep moving cuz we dont wanna start here
         while(checkBlack(mat.get((int) ((slope * getOutBlack) + yIntercept),getOutBlack))){
             getOutBlack+=1;
         }
+        //move across x while solving y
         for (int i = (int) getOutBlack; i < (end.x + .5); i++) {
+            //WARNING! method bellow is .get(y,x) cuz opencv is stupid
             double[] point = mat.get((int) ((slope * i) + yIntercept), i);
             Log.e("coordinate", "Coor: (" + i + ", " + (int) ((slope * i) + yIntercept) + ")");
+            // is the point black
             if (checkBlack(point)) {
+                //if we dont have a beggining point the startBlack is -1
                 if (startBlack == -1) {
+                    //ok dis is start point
                     startBlack = i;
                 } else {
+                    //so we are in a black region keep goin do nothing
                 }
             } else {
                 if (startBlack == -1) {
-
+                        //if we arent in black and we havent seen a black we are in white space :O
                 } else {
+                    //so you found the end of the black space but is that region big enough to be a refrence block or just something weird
                     if(i-startBlack>10){
                         int blackX = (startBlack + ((i - startBlack) / 2));
                         if (points.size()>=1){
@@ -474,6 +493,7 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
 
 
     public List<Point> findTimingVerticle(Mat mat, Point start, Point end) {
+        //see comment above plz
         List<Point> points = new ArrayList<>();
         double rise = start.y - end.y;
         double run = start.x - end.x;
@@ -518,6 +538,7 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
     }
 
     public boolean checkBlack(double[] d) {
+        //check if value is black
         if (d != null) {
             if (d.length == 4) {
                 double[] valMin = new double[4];
@@ -549,12 +570,10 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
     }
 
     public Point conversion(Point p) {
-
         DisplayMetrics metrics = getResources().getDisplayMetrics();
         int real_x = (int) (p.x * width) / metrics.widthPixels;
         int real_y = (int) (p.y * height) / metrics.heightPixels;
         return (new Point(real_x, real_y));
-
     }
 
     public float conversionX(double p) {
@@ -597,5 +616,4 @@ public void safeMove(View view, float Xset, float Yset){
         view.setY(Yset);
     }
 }
-
 }
