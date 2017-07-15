@@ -1,9 +1,7 @@
 package org.opencv.samples.colorblobdetect;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Queue;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewFrame;
@@ -12,8 +10,6 @@ import org.opencv.android.OpenCVLoader;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
-import org.opencv.core.MatOfPoint;
-import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
 import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
@@ -208,7 +204,7 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
         bottomLeftTarget.SetUp(Color.GREEN, "BL");
         bottomRightTarget.SetUp(Color.BLUE, "BR");
         //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        saveDatum=(Button) findViewById(R.id.saveThatData);
+        saveDatum = (Button) findViewById(R.id.saveThatData);
         saveDatum.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -307,13 +303,13 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
 
     public Mat onCameraFrame(CvCameraViewFrame inputFrame) {
         //this is the frame we want it in RGBA
-        mRgbaGr = inputFrame.rgba();
+        mRgbaGr = inputFrame.rgba()  ;
         Scalar blueHSV, greenHSV, redHSV; // our hard coded colors to detect
         width = mRgbaGr.width(); // what is the width and height of frame
         height = mRgbaGr.height();
-        greenHSV = new Scalar(85.234375, 254.765625, 181.890625, 0.0);//dat harcoding TODO:check validity of these values
-        redHSV = new Scalar(1.53125, 255.0, 195.640625, 0.0);
-        blueHSV = new Scalar(171.0, 255.0, 172.875, 0.0);
+        greenHSV = new Scalar(89.890625, 201.28125, 235.703125, 0.0);//dat harcoding TODO:check validity of these values
+        redHSV = new Scalar(2.734375, 255.0, 220.203125, 0.0);
+        blueHSV = new Scalar(171.0, 255.0, 205.28125, 0.0);
 
         //Grab bottom right point of target view and convert it as the resolution of the camera picture and the phone screen could be different
         Point TopLeft = conversion(new Point(topLeftTarget.getX() + topLeftTarget.getWidth(), topLeftTarget.getY() + topLeftTarget.getHeight()));
@@ -328,10 +324,11 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
         Point BottomRightM = conversion(new Point(bottomRightTarget.getX(), bottomRightTarget.getY()));
 
         //run the algorithm to find the center of the black region in the corner
-        Point pTopLeft = mDetector.getCenterBlack(mRgbaGr, TopLeft, TopLeftM, blueHSV);
-        Point pTopRight = mDetector.getCenterBlack(mRgbaGr, TopRight, TopRightM, redHSV);
-        Point pBottomLeft = mDetector.getCenterBlack(mRgbaGr, BottomLeft, BottomLeftM, greenHSV);
-        Point pBottomRight = mDetector.getCenterBlack(mRgbaGr, BottomRight, BottomRightM, blueHSV);
+        Point pTopLeft = mDetector.getCenterBlack(mRgbaGr, TopLeft, TopLeftM, blueHSV,0);
+
+        Point pTopRight = mDetector.getCenterBlack(mRgbaGr, TopRight, TopRightM, redHSV,1);
+        Point pBottomLeft = mDetector.getCenterBlack(mRgbaGr, BottomLeft, BottomLeftM, greenHSV,2);
+        Point pBottomRight = mDetector.getCenterBlack(mRgbaGr, BottomRight, BottomRightM, blueHSV,3);
 
         //this is where we will save our timing block points
         List<Point> topLine = new ArrayList<Point>();
@@ -341,7 +338,7 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
 
         if (pTopLeft.x != -100 && pTopRight.x != -100 && pBottomLeft.x != -100 && pBottomRight.x != -100) {//AKA only if we found four corner points do we continue
             //we automaticaly readjust where the target views are centered but only if we dont move them of screen cuz that crashes app :''( ; therefore, safe move
-            safeMove(topLeftTarget, conversionX(pTopLeft.x) - (topLeftTarget.getWidth() / 2), (conversionY(pTopLeft.y)) - (topLeftTarget.getWidth() / 2));
+           safeMove(topLeftTarget, conversionX(pTopLeft.x) - (topLeftTarget.getWidth() / 2), (conversionY(pTopLeft.y)) - (topLeftTarget.getWidth() / 2));
             safeMove(topRightTarget, conversionX(pTopRight.x) - (topLeftTarget.getWidth() / 2), conversionY(pTopRight.y) - (topLeftTarget.getWidth() / 2));
             safeMove(bottomLeftTarget, conversionX(pBottomLeft.x) - (topLeftTarget.getWidth() / 2), conversionY(pBottomLeft.y) - (topLeftTarget.getWidth() / 2));
             safeMove(bottomRightTarget, conversionX(pBottomRight.x) - (topLeftTarget.getWidth() / 2), conversionY(pBottomRight.y) - (topLeftTarget.getWidth() / 2));
@@ -366,8 +363,8 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
                     innerGrid.add(new Point(xIntercept, yIntercept));
                 }
             }
-        }
-
+        }/*
+        mRgbaGr=inputFrame.rgba();*/
         Imgproc.rectangle(mRgbaGr, TopLeftM, TopLeft, new Scalar(12, 28, 181), 5);
         Imgproc.rectangle(mRgbaGr, TopRightM, TopRight, new Scalar(162, 0, 0), 5);
         Imgproc.rectangle(mRgbaGr, BottomLeft, BottomLeftM, new Scalar(26, 173, 18), 5);
@@ -387,13 +384,49 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
 
         //draw all data center color points
         ArrayList<String> valueCalc = new ArrayList<>();
-        for (Point p : innerGrid) {
-            Imgproc.circle(mRgbaGr, p, 10, new Scalar(76, 123, 254, 255), 5);
-            if(saveThisCapture){
-                valueCalc.add(mRgbaGr.get((int)p.y,(int)p.x)[0]+", "+mRgbaGr.get((int)p.y,(int)p.x)[1]+", "+mRgbaGr.get((int)p.y,(int)p.x)[2]+", "+mRgbaGr.get((int)p.y,(int)p.x)[3]);
+        for (int p = 0; p < innerGrid.size(); p++) {
+
+            Imgproc.circle(mRgbaGr, innerGrid.get(p), 10, new Scalar(76, 123, 254, 255), 5);
+
+            if (saveThisCapture) {
+                int[] colorLikiness = new int[]{0, 0, 0};
+                double[] color = mRgbaGr.get((int) innerGrid.get(p).y, (int) innerGrid.get(p).x);
+                double whiteDiff, blueDiff, greenDiff, redDiff;
+                double[] greenRGB = new double[]{0, 255, 0, 0.0};
+                double[] redRGB = new double[]{255, 0, 0, 0.0};
+                double[] blueRGB = new double[]{0, 0, 255, 0.0};
+                double[] whiteRGB = new double[]{255, 255, 255, 0.0};
+
+                whiteDiff = colorDifference(whiteRGB, color);
+                blueDiff = colorDifference(blueRGB, color);
+                greenDiff = colorDifference(greenRGB, color);
+                redDiff = colorDifference(redRGB, color);
+
+                double[] findMin = new double[]{whiteDiff, blueDiff, redDiff, greenDiff};
+                int minIndex = -1;
+                double minValue = Double.MAX_VALUE;
+                for (int i = 0; i < findMin.length; i++) {
+                    if (findMin[i] < minValue) {
+                        minIndex = i;
+                        minValue=findMin[i];
+                    }
+                }
+                switch (minIndex) {
+                    case 0:
+                        valueCalc.add("White");
+                        break;
+                    case 1:
+                        valueCalc.add("Blue");
+                        break;
+                    case 2:
+                        valueCalc.add("Red");
+                        break;
+                    case 3:
+                        valueCalc.add("Green");
+                        break;
+                }
             }
         }
-
 
 
         //draw timing points
@@ -416,10 +449,10 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
                     average2 = averageBlockSize(leftLine),
                     average3 = averageBlockSize(rightLine),
                     average4 = averageBlockSize(bottomLine);
-            double average = (average1+average2+average3+average4)/4.0;
-            SaveValues saveValues = new SaveValues((int)average,topLine.size(),leftLine.size());
-            saveValues.saveBarCode(getApplicationContext(),valueCalc);
-        saveThisCapture=false;
+            double average = (average1 + average2 + average3 + average4) / 4.0;
+            SaveValues saveValues = new SaveValues((int) average, topLine.size(), leftLine.size());
+            saveValues.saveBarCode(getApplicationContext(), valueCalc);
+            saveThisCapture = false;
         }
         return mRgbaGr;
     }
@@ -463,6 +496,15 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
         }
         return false;
     }
+
+    public double colorDifference(double[] col1, double[] col2) {
+        double sum = 0.0;
+        for (int i = 0; i < col1.length; i++) {
+            sum += Math.pow(col1[i] - col2[i], 2.0);
+        }
+        return Math.sqrt(sum);
+    }
+
 
     public void safeMove(View view, float Xset, float Yset) {
         DisplayMetrics metrics = getResources().getDisplayMetrics();

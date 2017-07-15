@@ -21,7 +21,6 @@ public class TargetView extends RelativeLayout {
     public TargetView(Context context, AttributeSet attrs) {
         super(context, attrs);
     }
-
     public TargetView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
     }
