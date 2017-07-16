@@ -43,6 +43,8 @@ FileOutputStream fileOutputStream = new FileOutputStream(getAlbumStorageDir(cont
                 string += i + ":" + colors.get(i) + "\n";
             }
             outputStreamWriter.append(string);
+            outputStreamWriter.close();
+            fileOutputStream.close();
         } catch (Exception e) {
             e.printStackTrace();
         }

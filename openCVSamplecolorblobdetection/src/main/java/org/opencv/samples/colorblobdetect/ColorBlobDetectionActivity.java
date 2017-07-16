@@ -303,7 +303,7 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
 
     public Mat onCameraFrame(CvCameraViewFrame inputFrame) {
         //this is the frame we want it in RGBA
-        mRgbaGr = inputFrame.rgba()  ;
+        mRgbaGr = inputFrame.rgba();
         Scalar blueHSV, greenHSV, redHSV; // our hard coded colors to detect
         width = mRgbaGr.width(); // what is the width and height of frame
         height = mRgbaGr.height();
@@ -324,11 +324,11 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
         Point BottomRightM = conversion(new Point(bottomRightTarget.getX(), bottomRightTarget.getY()));
 
         //run the algorithm to find the center of the black region in the corner
-        Point pTopLeft = mDetector.getCenterBlack(mRgbaGr, TopLeft, TopLeftM, blueHSV,0);
+        Point pTopLeft = mDetector.getCenterBlack(mRgbaGr, TopLeft, TopLeftM, blueHSV, 0);
 
-        Point pTopRight = mDetector.getCenterBlack(mRgbaGr, TopRight, TopRightM, redHSV,1);
-        Point pBottomLeft = mDetector.getCenterBlack(mRgbaGr, BottomLeft, BottomLeftM, greenHSV,2);
-        Point pBottomRight = mDetector.getCenterBlack(mRgbaGr, BottomRight, BottomRightM, blueHSV,3);
+        Point pTopRight = mDetector.getCenterBlack(mRgbaGr, TopRight, TopRightM, redHSV, 1);
+        Point pBottomLeft = mDetector.getCenterBlack(mRgbaGr, BottomLeft, BottomLeftM, greenHSV, 2);
+        Point pBottomRight = mDetector.getCenterBlack(mRgbaGr, BottomRight, BottomRightM, blueHSV, 3);
 
         //this is where we will save our timing block points
         List<Point> topLine = new ArrayList<Point>();
@@ -338,7 +338,7 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
 
         if (pTopLeft.x != -100 && pTopRight.x != -100 && pBottomLeft.x != -100 && pBottomRight.x != -100) {//AKA only if we found four corner points do we continue
             //we automaticaly readjust where the target views are centered but only if we dont move them of screen cuz that crashes app :''( ; therefore, safe move
-           safeMove(topLeftTarget, conversionX(pTopLeft.x) - (topLeftTarget.getWidth() / 2), (conversionY(pTopLeft.y)) - (topLeftTarget.getWidth() / 2));
+            safeMove(topLeftTarget, conversionX(pTopLeft.x) - (topLeftTarget.getWidth() / 2), (conversionY(pTopLeft.y)) - (topLeftTarget.getWidth() / 2));
             safeMove(topRightTarget, conversionX(pTopRight.x) - (topLeftTarget.getWidth() / 2), conversionY(pTopRight.y) - (topLeftTarget.getWidth() / 2));
             safeMove(bottomLeftTarget, conversionX(pBottomLeft.x) - (topLeftTarget.getWidth() / 2), conversionY(pBottomLeft.y) - (topLeftTarget.getWidth() / 2));
             safeMove(bottomRightTarget, conversionX(pBottomRight.x) - (topLeftTarget.getWidth() / 2), conversionY(pBottomRight.y) - (topLeftTarget.getWidth() / 2));
@@ -384,9 +384,8 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
 
         //draw all data center color points
         ArrayList<String> valueCalc = new ArrayList<>();
+        int colorChoice=0;
         for (int p = 0; p < innerGrid.size(); p++) {
-
-            Imgproc.circle(mRgbaGr, innerGrid.get(p), 10, new Scalar(76, 123, 254, 255), 5);
 
             if (saveThisCapture) {
                 int[] colorLikiness = new int[]{0, 0, 0};
@@ -408,7 +407,7 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
                 for (int i = 0; i < findMin.length; i++) {
                     if (findMin[i] < minValue) {
                         minIndex = i;
-                        minValue=findMin[i];
+                        minValue = findMin[i];
                     }
                 }
                 switch (minIndex) {
@@ -426,6 +425,11 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
                         break;
                 }
             }
+          //  if(colorChoice!=255){
+            //    colorChoice++;
+          //  }
+           // Imgproc.circle(mRgbaGr, innerGrid.get(p), 10, new Scalar(colorChoice, colorChoice, colorChoice, 255), 5);
+
         }
 
 

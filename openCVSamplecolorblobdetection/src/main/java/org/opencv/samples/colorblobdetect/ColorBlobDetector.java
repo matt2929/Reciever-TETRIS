@@ -210,7 +210,6 @@ public class ColorBlobDetector {
 
             List<MatOfPoint> matOfPointList = getContours();
             if (matOfPointList.size() > 0) {
-                Log.e("soze", "" + matOfPointList.size());
             }
             double areaMax = -1.0;
 
@@ -240,34 +239,34 @@ public class ColorBlobDetector {
                         double temp = 0;
                         switch (whichCorner) {
                             case 0:
-                                Log.e("Corner", "TL");
+                             //   Log.e("Corner", "TL");
                                 temp = Math.pow(
                                         Math.pow((Math.min(point1.x, point2.x) - ((bounding.x + bounding.width) / 2)), 2)
                                                 + Math.pow(Math.min(point1.y, point2.y) - ((bounding.y + bounding.height) / 2), 2), .5);
                                 break;
                             case 1:
-                                Log.e("Corner", "TR");
+                             //   Log.e("Corner", "TR");
                                 temp = Math.pow(
                                         Math.pow((Math.min(point1.x, point2.x) - ((bounding.x + bounding.width) / 2)), 2)
                                                 + Math.pow(Math.max(point1.y, point2.y) - ((bounding.y + bounding.height) / 2), 2), .5);
                                 break;
                             case 2:
 
-                                Log.e("Corner", "BL");
+                             //   Log.e("Corner", "BL");
                                 temp = Math.pow(
                                         Math.pow((Math.max(point1.x, point2.x) - ((bounding.x + bounding.width) / 2)), 2)
                                                 + Math.pow(Math.min(point1.y, point2.y) - ((bounding.y + bounding.height) / 2), 2), .5);
                                 break;
                             case 3:
 
-                                Log.e("Corner", "BR");
+                             //   Log.e("Corner", "BR");
                                 temp = Math.pow(
                                         Math.pow((Math.max(point1.x, point2.x) - ((bounding.x + bounding.width) / 2)), 2)
                                                 + Math.pow(Math.max(point1.y, point2.y) - ((bounding.y + bounding.height) / 2), 2), .5);
 
                                 break;
                         }
-                        Log.e("compare", "temp:" + temp + " " + "min dist: " + minDistanceFromCorner + " s:" + matOfPointList.size());
+                    //    Log.e("compare", "temp:" + temp + " " + "min dist: " + minDistanceFromCorner + " s:" + matOfPointList.size());
                         if (temp < minDistanceFromCorner) {
                             minDistanceFromCorner = temp;
                             minMat = matOfPoint;
