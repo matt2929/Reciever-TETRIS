@@ -220,6 +220,8 @@ public class ColorBlobDetector {
                     areaMax = areaT;
                 }
             }
+        }else{
+            Log.e("error corner","couldnt find color contour");
         }
         contours.clear();
         contours.add(matOfPointMax);
@@ -275,20 +277,30 @@ public class ColorBlobDetector {
                 }
                 mContours.clear();
                 mContours.add(minMat);
-            } else {/*
+            } else {
+
+                Log.e("error corner","couldnt find black contour");
+
                 int blackCount = 0;
+                double blackXSum=0;
+                double blackYSum=0;
                 for (int i = rect.x; i < rect.x + rect.width; i++) {
                     for (int j = rect.y; j < rect.y + rect.height; j++) {
                         if (checkBlack(mRgbaGr.get(j, i))) {
                             blackCount++;
+                            blackXSum+=i;
+                            blackYSum+=j;
                         }
                     }
                 }
 
+                if(blackCount!=0){
+                    return new Point(blackXSum/blackCount, blackYSum/blackCount);
+                }
+
                 Log.e("no", "black found: " + blackCount);
 
-                return new Point(rect.x + rect.width / 2, rect.y + rect.height / 2);
-*/
+
             }
         }
         return centerAverage();
@@ -314,8 +326,15 @@ public class ColorBlobDetector {
         while (checkBlack(mat.get((int) ((slope * getOutBlack) + yIntercept), getOutBlack))) {
             getOutBlack += 1;
         }
+
+        int getBeforeBlack = (int) end.x;
+
+        while (checkBlack(mat.get((int) ((slope * getBeforeBlack) + yIntercept), getBeforeBlack))) {
+            getBeforeBlack -= 1;
+        }
+
         //move across x while solving y
-        for (int i = (int) getOutBlack; i < (end.x + .5); i++) {
+        for (int i = (int) getOutBlack; i < getBeforeBlack; i++) {
             //WARNING! method bellow is .get(y,x) cuz opencv is stupid
             double[] point = mat.get((int) ((slope * i) + yIntercept), i);
             // is the point black
@@ -332,12 +351,16 @@ public class ColorBlobDetector {
                     //if we arent in black and we havent seen a black we are in white space :O
                 } else {
                     //so you found the end of the black space but is that region big enough to be a refrence block or just something weird
-                    if (i - startBlack > 5) {
+                    Log.e("size",""+(i-startBlack));
+                    if (i - startBlack >= 8) {
+
                         int blackX = (startBlack + ((i - startBlack) / 2));
                         if (points.size() >= 1) {
                             points.add(new Point(((points.get(points.size() - 1).x + blackX) / 2), (slope * ((points.get(points.size() - 1).x + blackX) / 2)) + yIntercept));
                         }
                         points.add(new Point(blackX, (slope * i) + yIntercept));
+                    }else{
+
                     }
                     startBlack = -1;
                 }
@@ -359,8 +382,11 @@ public class ColorBlobDetector {
         while (checkBlack(mat.get(getOutBlack, (int) ((getOutBlack - yIntercept) / slope)))) {
             getOutBlack += 1;
         }
-
-        for (int i = getOutBlack; i < (end.y + .5); i++) {
+        int endBeforeBlack= (int)end.y;
+        while (checkBlack(mat.get(endBeforeBlack, (int) ((endBeforeBlack- yIntercept) / slope)))) {
+            endBeforeBlack -= 1;
+        }
+        for (int i = getOutBlack; i < endBeforeBlack; i++) {
             double[] point = mat.get(i, (int) ((i - yIntercept) / slope));
             if (checkBlack(point)) {
                 if (startBlack == -1) {
@@ -392,11 +418,11 @@ public class ColorBlobDetector {
                 double[] valMax = new double[4];
 
                 valMin[0] = 0;//minH;
-                valMax[0] = 180;//maxH;
+                valMax[0] = 190;//maxH;
                 valMin[1] = 0;//hsvColor.val[1] - mColorRadius.val[1];
                 valMax[1] = 255;//hsvColor.val[1] + mColorRadius.val[1];
                 valMin[2] = 0;//hsvColor.val[2] - mColorRadius.val[2];
-                valMax[2] = 30;//hsvColor.val[2] + mColorRadius.val[2];
+                valMax[2] = 180;//hsvColor.val[2] + mColorRadius.val[2];
                 valMin[3] = 0;
                 valMax[3] = 255;
 

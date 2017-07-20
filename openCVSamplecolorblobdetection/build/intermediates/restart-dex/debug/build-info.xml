@@ -1,32 +1,72 @@
 <?xml version="1.0" encoding="utf-8"?>
 <instant-run
-    abi="arm64-v8a,armeabi-v7a,armeabi"
-    api-level="24"
-    build-mode="COLD"
+    abi="armeabi-v7a,armeabi"
+    api-level="22"
+    build-mode="FULL"
     density="xxhdpi"
     format="10"
     plugin-version="2.3.3"
-    timestamp="1499638226263"
+    timestamp="1500590496658"
     token="-8240051690442804457"
-    verifier="COLD_SWAP_REQUESTED" >
+    verifier="FULL_BUILD_REQUESTED" >
 
     <task
         name="javac"
-        duration="0" />
+        duration="235" />
     <task
         name="instant-run-dex"
         duration="0" />
     <task
         name="instant-run-transform"
-        duration="0" />
+        duration="51" />
     <task
         name="verifier"
-        duration="0" />
+        duration="19" />
+
+    <artifact
+        location="C:\Users\Matth\Downloads\color-blob-detection\openCVSamplecolorblobdetection\build\intermediates\split-apk\debug\slices\slice_1.apk"
+        type="SPLIT" />
+    <artifact
+        location="C:\Users\Matth\Downloads\color-blob-detection\openCVSamplecolorblobdetection\build\outputs\apk\openCVSamplecolorblobdetection-debug.apk"
+        type="SPLIT_MAIN" />
+    <artifact
+        location="C:\Users\Matth\Downloads\color-blob-detection\openCVSamplecolorblobdetection\build\intermediates\split-apk\debug\slices\slice_8.apk"
+        type="SPLIT" />
+    <artifact
+        location="C:\Users\Matth\Downloads\color-blob-detection\openCVSamplecolorblobdetection\build\intermediates\split-apk\debug\slices\slice_2.apk"
+        type="SPLIT" />
+    <artifact
+        location="C:\Users\Matth\Downloads\color-blob-detection\openCVSamplecolorblobdetection\build\intermediates\split-apk\debug\slices\slice_3.apk"
+        type="SPLIT" />
+    <artifact
+        location="C:\Users\Matth\Downloads\color-blob-detection\openCVSamplecolorblobdetection\build\intermediates\split-apk\debug\slices\slice_5.apk"
+        type="SPLIT" />
+    <artifact
+        location="C:\Users\Matth\Downloads\color-blob-detection\openCVSamplecolorblobdetection\build\intermediates\split-apk\debug\slices\slice_0.apk"
+        type="SPLIT" />
+    <artifact
+        location="C:\Users\Matth\Downloads\color-blob-detection\openCVSamplecolorblobdetection\build\intermediates\split-apk\debug\slices\slice_4.apk"
+        type="SPLIT" />
+    <artifact
+        location="C:\Users\Matth\Downloads\color-blob-detection\openCVSamplecolorblobdetection\build\intermediates\split-apk\debug\slices\slice_9.apk"
+        type="SPLIT" />
+    <artifact
+        location="C:\Users\Matth\Downloads\color-blob-detection\openCVSamplecolorblobdetection\build\intermediates\split-apk\debug\slices\slice_6.apk"
+        type="SPLIT" />
+    <artifact
+        location="C:\Users\Matth\Downloads\color-blob-detection\openCVSamplecolorblobdetection\build\intermediates\split-apk\debug\slices\slice_7.apk"
+        type="SPLIT" />
 
     <build
         build-mode="FULL"
-        timestamp="1499630648850"
+        timestamp="1500590496658"
         verifier="FULL_BUILD_REQUESTED" >
+        <artifact
+            location="C:\Users\Matth\Downloads\color-blob-detection\openCVSamplecolorblobdetection\build\intermediates\split-apk\debug\slices\slice_1.apk"
+            type="SPLIT" />
+        <artifact
+            location="C:\Users\Matth\Downloads\color-blob-detection\openCVSamplecolorblobdetection\build\outputs\apk\openCVSamplecolorblobdetection-debug.apk"
+            type="SPLIT_MAIN" />
         <artifact
             location="C:\Users\Matth\Downloads\color-blob-detection\openCVSamplecolorblobdetection\build\intermediates\split-apk\debug\slices\slice_8.apk"
             type="SPLIT" />
@@ -35,9 +75,6 @@
             type="SPLIT" />
         <artifact
             location="C:\Users\Matth\Downloads\color-blob-detection\openCVSamplecolorblobdetection\build\intermediates\split-apk\debug\slices\slice_3.apk"
-            type="SPLIT" />
-        <artifact
-            location="C:\Users\Matth\Downloads\color-blob-detection\openCVSamplecolorblobdetection\build\intermediates\split-apk\debug\slices\slice_1.apk"
             type="SPLIT" />
         <artifact
             location="C:\Users\Matth\Downloads\color-blob-detection\openCVSamplecolorblobdetection\build\intermediates\split-apk\debug\slices\slice_5.apk"
@@ -57,21 +94,6 @@
         <artifact
             location="C:\Users\Matth\Downloads\color-blob-detection\openCVSamplecolorblobdetection\build\intermediates\split-apk\debug\slices\slice_7.apk"
             type="SPLIT" />
-        <artifact
-            location="C:\Users\Matth\Downloads\color-blob-detection\openCVSamplecolorblobdetection\build\outputs\apk\openCVSamplecolorblobdetection-debug.apk"
-            type="SPLIT_MAIN" />
     </build>
-    <build
-        build-mode="COLD"
-        timestamp="1499632481038"
-        verifier="COLD_SWAP_REQUESTED" >
-        <artifact
-            location="C:\Users\Matth\Downloads\color-blob-detection\openCVSamplecolorblobdetection\build\intermediates\split-apk\debug\slices\slice_1.apk"
-            type="SPLIT" />
-    </build>
-    <build
-        build-mode="COLD"
-        timestamp="1499638226263"
-        verifier="COLD_SWAP_REQUESTED" />
 
 </instant-run>

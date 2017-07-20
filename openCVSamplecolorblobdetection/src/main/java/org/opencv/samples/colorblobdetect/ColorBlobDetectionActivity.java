@@ -1,6 +1,9 @@
 package org.opencv.samples.colorblobdetect;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import org.opencv.android.BaseLoaderCallback;
@@ -20,9 +23,11 @@ import org.opencv.imgproc.Imgproc;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -209,6 +214,7 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
             @Override
             public void onClick(View view) {
                 saveThisCapture = true;
+                takeScreenshot();
             }
         });
     }
@@ -325,7 +331,6 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
 
         //run the algorithm to find the center of the black region in the corner
         Point pTopLeft = mDetector.getCenterBlack(mRgbaGr, TopLeft, TopLeftM, blueHSV, 0);
-
         Point pTopRight = mDetector.getCenterBlack(mRgbaGr, TopRight, TopRightM, redHSV, 1);
         Point pBottomLeft = mDetector.getCenterBlack(mRgbaGr, BottomLeft, BottomLeftM, greenHSV, 2);
         Point pBottomRight = mDetector.getCenterBlack(mRgbaGr, BottomRight, BottomRightM, blueHSV, 3);
@@ -354,7 +359,12 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
                 for (int x = 0; x < topLine.size(); x++) {
                     //watch your step line intersect equation below
                     //this is where we draw every point that lies on the matrix of colors
-                    double slope1 = (leftLine.get(y).y - rightLine.get(y).y) / (leftLine.get(y).x - rightLine.get(y).x);
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            saveDatum.setBackgroundColor(Color.WHITE);
+                        }
+                    });        double slope1 = (leftLine.get(y).y - rightLine.get(y).y) / (leftLine.get(y).x - rightLine.get(y).x);
                     double yIntercept1 = leftLine.get(y).y - (slope1 * leftLine.get(y).x);
                     double slope2 = (topLine.get(x).y - bottomLine.get(x).y) / (topLine.get(x).x - bottomLine.get(x).x);
                     double yIntercept2 = topLine.get(x).y - (slope2 * topLine.get(x).x);
@@ -363,8 +373,17 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
                     innerGrid.add(new Point(xIntercept, yIntercept));
                 }
             }
-        }/*
+        } else {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    saveDatum.setBackgroundColor(Color.YELLOW);
+                }
+            });
+        /*
         mRgbaGr=inputFrame.rgba();*/
+        }
+        mRgbaGr=inputFrame.rgba().clone();
         Imgproc.rectangle(mRgbaGr, TopLeftM, TopLeft, new Scalar(12, 28, 181), 5);
         Imgproc.rectangle(mRgbaGr, TopRightM, TopRight, new Scalar(162, 0, 0), 5);
         Imgproc.rectangle(mRgbaGr, BottomLeft, BottomLeftM, new Scalar(26, 173, 18), 5);
@@ -384,7 +403,7 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
 
         //draw all data center color points
         ArrayList<String> valueCalc = new ArrayList<>();
-        int colorChoice=0;
+        int colorChoice = 0;
         for (int p = 0; p < innerGrid.size(); p++) {
 
             if (saveThisCapture) {
@@ -412,23 +431,23 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
                 }
                 switch (minIndex) {
                     case 0:
-                        valueCalc.add("White");
+                        valueCalc.add("W");
                         break;
                     case 1:
-                        valueCalc.add("Blue");
+                        valueCalc.add("B");
                         break;
                     case 2:
-                        valueCalc.add("Red");
+                        valueCalc.add("R");
                         break;
                     case 3:
-                        valueCalc.add("Green");
+                        valueCalc.add("G");
                         break;
                 }
             }
-          //  if(colorChoice!=255){
-            //    colorChoice++;
-          //  }
-           // Imgproc.circle(mRgbaGr, innerGrid.get(p), 10, new Scalar(colorChoice, colorChoice, colorChoice, 255), 5);
+              if(colorChoice!=255){
+                colorChoice++;
+              }
+             Imgproc.circle(mRgbaGr, innerGrid.get(p), 1, new Scalar(colorChoice, colorChoice, colorChoice, 255), 1);
 
         }
 
@@ -460,6 +479,8 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
         }
         return mRgbaGr;
     }
+
+
 
     public void getColorContour(Mat mRgbaGr, Point point1, Point point2, Scalar color) {
 
@@ -520,6 +541,32 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
         } else {
             view.setX(Xset);
             view.setY(Yset);
+        }
+    }
+
+    private void takeScreenshot() {
+        Date now = new Date();
+        android.text.format.DateFormat.format("yyyy-MM-dd_hh:mm:ss", now);
+
+        try {
+            // image naming and path  to include sd card  appending name you choose for file
+            String mPath = Environment.getExternalStorageDirectory().toString() + "/" + now + ".jpg";
+            // create bitmap screen capture
+            View v1 = getWindow().getDecorView().getRootView();
+            v1.setDrawingCacheEnabled(true);
+            Bitmap bitmap = Bitmap.createBitmap(v1.getDrawingCache());
+            v1.setDrawingCacheEnabled(false);
+
+            File imageFile = new File(mPath);
+
+            FileOutputStream outputStream = new FileOutputStream(imageFile);
+            int quality = 100;
+            bitmap.compress(Bitmap.CompressFormat.JPEG, quality, outputStream);
+            outputStream.flush();
+            outputStream.close();
+        } catch (Throwable e) {
+            // Several error may come out with file handling or OOM
+            e.printStackTrace();
         }
     }
 

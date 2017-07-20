@@ -47,6 +47,7 @@ containing a value of this type.
         public static final int color_blob_detection_activity_surface_view=0x7f050003;
         public static final int cornerDrawing=0x7f050004;
         public static final int front=0x7f050002;
+        public static final int saveThatData=0x7f05000c;
         public static final int space=0x7f050006;
         public static final int space2=0x7f050005;
         public static final int topLeft=0x7f05000b;

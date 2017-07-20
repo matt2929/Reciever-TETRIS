@@ -40,7 +40,6 @@
         <view
             android:id="@+id/bottomLeft"
             class="org.opencv.samples.colorblobdetect.TargetView"
-            id="@+id/view"
             android:layout_width="30dp"
             android:layout_height="30dp"
             android:layout_alignTop="@+id/space"
@@ -49,7 +48,6 @@
         <view
             android:id="@+id/topRight"
             class="org.opencv.samples.colorblobdetect.TargetView"
-            id="@+id/view"
             android:layout_width="30dp"
             android:layout_height="30dp"
             android:layout_above="@+id/space"
@@ -58,11 +56,20 @@
         <view
             android:id="@+id/topLeft"
             class="org.opencv.samples.colorblobdetect.TargetView"
-            id="@+id/view"
             android:layout_width="30dp"
             android:layout_height="30dp"
             android:layout_alignBottom="@+id/space"
             android:layout_alignLeft="@+id/bottomLeft" />
     </RelativeLayout>
+
+    <Button
+        android:id="@+id/saveThatData"
+        android:layout_width="match_parent"
+        android:layout_height="50dip"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentTop="true"
+        android:text="Button"
+        android:visibility="visible" />
 
 </RelativeLayout>

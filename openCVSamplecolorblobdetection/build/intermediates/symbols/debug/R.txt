@@ -8,6 +8,7 @@ int id bottomRight 0x7f050007
 int id color_blob_detection_activity_surface_view 0x7f050003
 int id cornerDrawing 0x7f050004
 int id front 0x7f050002
+int id saveThatData 0x7f05000c
 int id space 0x7f050006
 int id space2 0x7f050005
 int id topLeft 0x7f05000b
