@@ -60,16 +60,36 @@
             android:layout_height="30dp"
             android:layout_alignBottom="@+id/space"
             android:layout_alignLeft="@+id/bottomLeft" />
+
     </RelativeLayout>
 
     <Button
         android:id="@+id/saveThatData"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="50dip"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentRight="true"
         android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
         android:text="Button"
         android:visibility="visible" />
+
+    <view
+        android:id="@+id/what2"
+        class="org.opencv.samples.colorblobdetect.WhatDoISee"
+        id="@+id/view2"
+        layout_alignParentBottom="true"
+        layout_marginLeft="43dp"
+        layout_toRightOf="@+id/bottomRight"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_alignParentBottom="true"
+        android:layout_toLeftOf="@+id/what" />
+
+    <view
+        android:id="@+id/what"
+        class="org.opencv.samples.colorblobdetect.WhatDoISee"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_alignParentRight="true"
+         android:layout_alignParentBottom="true" />
 
 </RelativeLayout>

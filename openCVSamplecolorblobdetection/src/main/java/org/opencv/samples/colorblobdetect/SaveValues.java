@@ -23,12 +23,12 @@ public class SaveValues {
     String filename = "";
     FileOutputStream outputStream;
 
-    public SaveValues(int BlockSize, int SquareWidth, int SquareHeight) {
+    public SaveValues(int BlockSize, int SquareWidth, int SquareHeight,String name) {
         this.BlockSquare = BlockSize;
         this.SquareWidth = SquareWidth;
         this.SquareHeight = SquareHeight;
         calendar =  Calendar.getInstance();
-        filename = "I_SAW_" + calendar.getTime().toString()+".txt";
+        filename = "I_SAW_" + name+".txt";
 
     }
 

@@ -40,7 +40,7 @@ import android.widget.Button;
 
 public class ColorBlobDetectionActivity extends Activity implements OnTouchListener, CvCameraViewListener2 {
     private static final String TAG = "OCVSample::Activity";
-
+    private boolean transmissionStarted = false;
     private boolean mIsColorSelected = false;
     private Mat mRgbaGr;
     ArrayList<Point> innerGrid = new ArrayList<Point>();
@@ -51,14 +51,37 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
     private Mat mSpectrum;
     private boolean saveThisCapture = false;
     //use view to hand select corners
+    WhatDoISee whatDoISee, whatDoISee2;
     TargetView topLeftTarget;
     TargetView topRightTarget;
     TargetView bottomRightTarget;
     TargetView bottomLeftTarget;
-    private Size SPECTRUM_SIZE;
-    private CameraBridgeViewBase mOpenCvCameraView;
+    Scalar greenHSV = new Scalar(89.890625, 201.28125, 235.703125, 0.0);//dat harcoding TODO:check validity of these values
+    Scalar redHSV = new Scalar(2.734375, 255.0, 220.203125, 0.0);
+    Scalar blueHSV = new Scalar(171.0, 255.0, 205.28125, 0.0);
 
+    private Size SPECTRUM_SIZE;
+    private double[] synchBlockColorLast;
+    Long UpdateRate = Long.valueOf(50);
+    Point pTopLeft;
+    Point pTopRight;
+    Point pBottomLeft;
+    Point pBottomRight;
+    Point TopLeft;
+    Point TopRight;
+    Point BottomLeft;
+    Point BottomRight;
+    Point TopLeftM;
+    Point TopRightM;
+    Point BottomLeftM;
+    Point BottomRightM;
+
+    private Boolean startedTrans = false;
+    private Boolean endedTrans = false;
+    private CameraBridgeViewBase mOpenCvCameraView;
+    private Long LastTime = System.currentTimeMillis();
     float dXTL, dYTL, dXTR, dYTR, dXBL, dYBL, dXBR, dYBR;
+    int countScreen = -1;
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
         @Override
         public void onManagerConnected(int status) {
@@ -77,6 +100,9 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
         }
     };
     private int width, height;
+    private List<Point> bottomLine, topLine, leftLine, rightLine;
+    private boolean hasHappenedOnce = false;
+    private boolean canAnalyze = false;
 
     public ColorBlobDetectionActivity() {
         Log.i(TAG, "Instantiated new " + this.getClass());
@@ -93,6 +119,7 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         setContentView(R.layout.color_blob_detection_surface_view);
         mOpenCvCameraView = (CameraBridgeViewBase) findViewById(R.id.color_blob_detection_activity_surface_view);
+        mOpenCvCameraView.enableFpsMeter();
         mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE);
         mOpenCvCameraView.setCvCameraViewListener(this);
         //Tell target view what to do when you click on it -------------------------------------------------------------------------------------------------
@@ -208,15 +235,20 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
         topRightTarget.SetUp(Color.RED, "TR");
         bottomLeftTarget.SetUp(Color.GREEN, "BL");
         bottomRightTarget.SetUp(Color.BLUE, "BR");
+
         //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
         saveDatum = (Button) findViewById(R.id.saveThatData);
         saveDatum.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                saveThisCapture = true;
-                takeScreenshot();
+                transmissionStarted = true;
+                saveDatum.setVisibility(View.GONE);
+                UpdateRate = Long.valueOf(5000);
             }
         });
+        whatDoISee = (WhatDoISee) findViewById(R.id.what);
+        whatDoISee2 = (WhatDoISee) findViewById(R.id.what2);
     }
 
 
@@ -257,6 +289,7 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
     public void onCameraViewStopped() {
         mRgbaGr.release();
     }
+
 
     public boolean onTouch(View v, MotionEvent event) {
         //this currently does nothing
@@ -307,105 +340,113 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
         return false; // don't need subsequent touch events
     }
 
-    public Mat onCameraFrame(CvCameraViewFrame inputFrame) {
-        //this is the frame we want it in RGBA
-        mRgbaGr = inputFrame.rgba();
-        Scalar blueHSV, greenHSV, redHSV; // our hard coded colors to detect
-        width = mRgbaGr.width(); // what is the width and height of frame
-        height = mRgbaGr.height();
-        greenHSV = new Scalar(89.890625, 201.28125, 235.703125, 0.0);//dat harcoding TODO:check validity of these values
-        redHSV = new Scalar(2.734375, 255.0, 220.203125, 0.0);
-        blueHSV = new Scalar(171.0, 255.0, 205.28125, 0.0);
-
-        //Grab bottom right point of target view and convert it as the resolution of the camera picture and the phone screen could be different
-        Point TopLeft = conversion(new Point(topLeftTarget.getX() + topLeftTarget.getWidth(), topLeftTarget.getY() + topLeftTarget.getHeight()));
-        Point TopRight = conversion(new Point(topRightTarget.getX() + topRightTarget.getWidth(), topRightTarget.getY() + topRightTarget.getHeight()));
-        Point BottomLeft = conversion(new Point(bottomLeftTarget.getX() + bottomLeftTarget.getWidth(), bottomLeftTarget.getY() + bottomLeftTarget.getHeight()));
-        Point BottomRight = conversion(new Point(bottomRightTarget.getX() + bottomRightTarget.getWidth(), bottomRightTarget.getY() + bottomRightTarget.getHeight()));
-
-        //Grab top left do same coversion
-        Point TopLeftM = conversion(new Point(topLeftTarget.getX(), topLeftTarget.getY()));
-        Point TopRightM = conversion(new Point(topRightTarget.getX(), topRightTarget.getY()));
-        Point BottomLeftM = conversion(new Point(bottomLeftTarget.getX(), bottomLeftTarget.getY()));
-        Point BottomRightM = conversion(new Point(bottomRightTarget.getX(), bottomRightTarget.getY()));
-
-        //run the algorithm to find the center of the black region in the corner
-        Point pTopLeft = mDetector.getCenterBlack(mRgbaGr, TopLeft, TopLeftM, blueHSV, 0);
-        Point pTopRight = mDetector.getCenterBlack(mRgbaGr, TopRight, TopRightM, redHSV, 1);
-        Point pBottomLeft = mDetector.getCenterBlack(mRgbaGr, BottomLeft, BottomLeftM, greenHSV, 2);
-        Point pBottomRight = mDetector.getCenterBlack(mRgbaGr, BottomRight, BottomRightM, blueHSV, 3);
-
-        //this is where we will save our timing block points
-        List<Point> topLine = new ArrayList<Point>();
-        List<Point> bottomLine = new ArrayList<Point>();
-        List<Point> leftLine = new ArrayList<Point>();
-        List<Point> rightLine = new ArrayList<Point>();
-
-        if (pTopLeft.x != -100 && pTopRight.x != -100 && pBottomLeft.x != -100 && pBottomRight.x != -100) {//AKA only if we found four corner points do we continue
-            //we automaticaly readjust where the target views are centered but only if we dont move them of screen cuz that crashes app :''( ; therefore, safe move
-            safeMove(topLeftTarget, conversionX(pTopLeft.x) - (topLeftTarget.getWidth() / 2), (conversionY(pTopLeft.y)) - (topLeftTarget.getWidth() / 2));
-            safeMove(topRightTarget, conversionX(pTopRight.x) - (topLeftTarget.getWidth() / 2), conversionY(pTopRight.y) - (topLeftTarget.getWidth() / 2));
-            safeMove(bottomLeftTarget, conversionX(pBottomLeft.x) - (topLeftTarget.getWidth() / 2), conversionY(pBottomLeft.y) - (topLeftTarget.getWidth() / 2));
-            safeMove(bottomRightTarget, conversionX(pBottomRight.x) - (topLeftTarget.getWidth() / 2), conversionY(pBottomRight.y) - (topLeftTarget.getWidth() / 2));
-            //find those timing son
+    public boolean getTheTimingBlocks() {
+        List<Point> pointsTemp1 = mDetector.findTimingHorizontal(mRgbaGr, pTopLeft, pTopRight);
+        List<Point> pointsTemp2 = mDetector.findTimingHorizontal(mRgbaGr, pBottomLeft, pBottomRight);
+        if (pointsTemp1.size() == pointsTemp2.size()) {
             bottomLine = mDetector.findTimingHorizontal(mRgbaGr, pTopLeft, pTopRight);
             topLine = mDetector.findTimingHorizontal(mRgbaGr, pBottomLeft, pBottomRight);
+        } else {
+            return false;
+        }
+        pointsTemp1 = mDetector.findTimingVerticle(mRgbaGr, pTopLeft, pBottomLeft);
+        pointsTemp2 = mDetector.findTimingVerticle(mRgbaGr, pTopRight, pBottomRight);
+        if (pointsTemp1.size() == pointsTemp2.size()) {
             leftLine = mDetector.findTimingVerticle(mRgbaGr, pTopLeft, pBottomLeft);
             rightLine = mDetector.findTimingVerticle(mRgbaGr, pTopRight, pBottomRight);
-        }
-        if (bottomLine.size() == topLine.size() && leftLine.size() == rightLine.size()) {//if the amount of timing blocks located are consistent per orientation continue else cry
-            innerGrid.clear();
-            for (int y = 0; y < leftLine.size(); y++) {
-                for (int x = 0; x < topLine.size(); x++) {
-                    //watch your step line intersect equation below
-                    //this is where we draw every point that lies on the matrix of colors
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            saveDatum.setBackgroundColor(Color.WHITE);
-                        }
-                    });        double slope1 = (leftLine.get(y).y - rightLine.get(y).y) / (leftLine.get(y).x - rightLine.get(y).x);
-                    double yIntercept1 = leftLine.get(y).y - (slope1 * leftLine.get(y).x);
-                    double slope2 = (topLine.get(x).y - bottomLine.get(x).y) / (topLine.get(x).x - bottomLine.get(x).x);
-                    double yIntercept2 = topLine.get(x).y - (slope2 * topLine.get(x).x);
-                    int xIntercept = (int) ((yIntercept2 - yIntercept1) / (slope1 - slope2));
-                    int yIntercept = (int) (xIntercept * slope1) + (int) yIntercept1;
-                    innerGrid.add(new Point(xIntercept, yIntercept));
-                }
-            }
         } else {
+            return false;
+        }
+        if (bottomLine.size() != 0 && leftLine.size() != 0) {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    saveDatum.setBackgroundColor(Color.YELLOW);
+                    saveDatum.setBackgroundColor(Color.WHITE);
                 }
             });
-        /*
-        mRgbaGr=inputFrame.rgba();*/
+            return true;
         }
-        mRgbaGr=inputFrame.rgba().clone();
-        Imgproc.rectangle(mRgbaGr, TopLeftM, TopLeft, new Scalar(12, 28, 181), 5);
-        Imgproc.rectangle(mRgbaGr, TopRightM, TopRight, new Scalar(162, 0, 0), 5);
-        Imgproc.rectangle(mRgbaGr, BottomLeft, BottomLeftM, new Scalar(26, 173, 18), 5);
-        Imgproc.rectangle(mRgbaGr, BottomRight, BottomRightM, new Scalar(12, 28, 181), 5);
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                saveDatum.setBackgroundColor(Color.YELLOW);
+            }
+        });
+        return false;
+    }
 
-        //draw pink points for center of corner
-        Imgproc.circle(mRgbaGr, pTopLeft, 10, new Scalar(255, 21, 255), 5);
-        Imgproc.circle(mRgbaGr, pTopRight, 10, new Scalar(255, 21, 255), 5);
-        Imgproc.circle(mRgbaGr, pBottomLeft, 10, new Scalar(255, 21, 255), 5);
-        Imgproc.circle(mRgbaGr, pBottomRight, 10, new Scalar(255, 21, 255), 5);
+    public void getInnerGrid() {
+        innerGrid.clear();
+        for (int y = 0; y < leftLine.size(); y++) {
+            for (int x = 0; x < topLine.size(); x++) {
+                //watch your step line intersect equation below
+                //this is where we draw every point that lies on the matrix of colors
 
-        //draw lines that connect assumed corners
-        Imgproc.line(mRgbaGr, pTopLeft, pTopRight, new Scalar(117, 210, 173), 5);
-        Imgproc.line(mRgbaGr, pTopLeft, pBottomLeft, new Scalar(117, 210, 173), 5);
-        Imgproc.line(mRgbaGr, pBottomLeft, pBottomRight, new Scalar(117, 210, 173), 5);
-        Imgproc.line(mRgbaGr, pTopRight, pBottomRight, new Scalar(117, 210, 173), 5);
+                double slope1 = (leftLine.get(y).y - rightLine.get(y).y) / (leftLine.get(y).x - rightLine.get(y).x);
+                double yIntercept1 = leftLine.get(y).y - (slope1 * leftLine.get(y).x);
+                double slope2 = (topLine.get(x).y - bottomLine.get(x).y) / (topLine.get(x).x - bottomLine.get(x).x);
+                double yIntercept2 = topLine.get(x).y - (slope2 * topLine.get(x).x);
+                int xIntercept = (int) ((yIntercept2 - yIntercept1) / (slope1 - slope2));
+                int yIntercept = (int) (xIntercept * slope1) + (int) yIntercept1;
+                innerGrid.add(new Point(xIntercept, yIntercept));
 
-        //draw all data center color points
+            }
+        }
+    }
+
+    public Mat onCameraFrame(CvCameraViewFrame inputFrame) {
+        Long timeShortWise =System.currentTimeMillis();
+        Long timeLongWise =System.currentTimeMillis();
+        mRgbaGr = inputFrame.rgba();
+        if (Math.abs(System.currentTimeMillis() - LastTime) > UpdateRate || pTopLeft == null) {
+            timeShortWise =System.currentTimeMillis();
+            targetUpdate();
+            Log.e("target update",""+Math.abs(timeShortWise-System.currentTimeMillis()));
+            timeShortWise =System.currentTimeMillis();
+            if (findCenterPoints()) {
+                safelyMoveAll();
+                Log.e("safely move all",""+Math.abs(timeShortWise-System.currentTimeMillis()));
+                timeShortWise =System.currentTimeMillis();
+                if (getTheTimingBlocks()) {
+                    Log.e("timing block",""+Math.abs(timeShortWise-System.currentTimeMillis()));
+                    timeShortWise =System.currentTimeMillis();
+                    hasHappenedOnce = true;
+                } else {
+                }
+            } else {
+            }
+            LastTime = System.currentTimeMillis();
+        }
+        Log.e("synch","Start\n");
+
+        if (leftLine != null && bottomLine != null) {
+            double[] currentStateBlock = mDetector.getStateBlock(mRgbaGr);
+            double[] currentStateBlock2 = mDetector.getStateBlock2(mRgbaGr);
+            colorSynchDetermination(currentStateBlock, currentStateBlock2);
+            Log.e("synch",""+Math.abs(timeShortWise-System.currentTimeMillis()));
+            timeShortWise =System.currentTimeMillis();
+            getInnerGrid();
+            Log.e("inner grid",""+Math.abs(timeShortWise-System.currentTimeMillis()));
+            timeShortWise =System.currentTimeMillis();
+            saveRoutine(determineColors());
+            Log.e("save & determine colors",""+Math.abs(timeShortWise-System.currentTimeMillis()));
+            timeShortWise =System.currentTimeMillis();
+            drawTimingAndLine();
+            Log.e("draw timing and line",""+Math.abs(timeShortWise-System.currentTimeMillis()));
+            timeShortWise =System.currentTimeMillis();
+        }
+        drawCornerData();
+        Log.e("corner draw",""+Math.abs(timeShortWise-System.currentTimeMillis()));
+        timeShortWise =System.currentTimeMillis();
+        Log.e("synch-end","\nEND\nTotal:"+Math.abs(timeLongWise -System.currentTimeMillis()));
+        return mRgbaGr;
+    }
+
+
+    public ArrayList<String> determineColors() {
         ArrayList<String> valueCalc = new ArrayList<>();
         int colorChoice = 0;
         for (int p = 0; p < innerGrid.size(); p++) {
-
             if (saveThisCapture) {
                 int[] colorLikiness = new int[]{0, 0, 0};
                 double[] color = mRgbaGr.get((int) innerGrid.get(p).y, (int) innerGrid.get(p).x);
@@ -444,15 +485,16 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
                         break;
                 }
             }
-              if(colorChoice!=255){
+            if (colorChoice != 255) {
                 colorChoice++;
-              }
-             Imgproc.circle(mRgbaGr, innerGrid.get(p), 1, new Scalar(colorChoice, colorChoice, colorChoice, 255), 1);
+            }
+            Imgproc.circle(mRgbaGr, innerGrid.get(p), 1, new Scalar(colorChoice, colorChoice, colorChoice, 255), 1);
 
         }
+        return valueCalc;
+    }
 
-
-        //draw timing points
+    public void drawTimingAndLine() {
         for (Point p : topLine) {
             Imgproc.circle(mRgbaGr, p, 10, new Scalar(23, 255, 143, 255), 5);
 
@@ -466,21 +508,78 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
         for (Point p : rightLine) {
             Imgproc.circle(mRgbaGr, p, 10, new Scalar(23, 255, 143, 255), 5);
         }
-        //end timing points
-        if (saveThisCapture) {
-            Integer average1 = averageBlockSize(topLine),
-                    average2 = averageBlockSize(leftLine),
-                    average3 = averageBlockSize(rightLine),
-                    average4 = averageBlockSize(bottomLine);
-            double average = (average1 + average2 + average3 + average4) / 4.0;
-            SaveValues saveValues = new SaveValues((int) average, topLine.size(), leftLine.size());
-            saveValues.saveBarCode(getApplicationContext(), valueCalc);
-            saveThisCapture = false;
-        }
-        return mRgbaGr;
+        //draw lines that connect assumed corners
+        Imgproc.line(mRgbaGr, pTopLeft, pTopRight, new Scalar(117, 210, 173), 5);
+        Imgproc.line(mRgbaGr, pTopLeft, pBottomLeft, new Scalar(117, 210, 173), 5);
+        Imgproc.line(mRgbaGr, pBottomLeft, pBottomRight, new Scalar(117, 210, 173), 5);
+        Imgproc.line(mRgbaGr, pTopRight, pBottomRight, new Scalar(117, 210, 173), 5);
+
+    }
+
+    public void saveRoutine(final ArrayList<String> valueCalc) {
+        new Thread(new Runnable() {
+            public void run() {
+                if (valueCalc != null) {
+                    if (saveThisCapture) {
+                        Integer average1 = averageBlockSize(topLine),
+                                average2 = averageBlockSize(leftLine),
+                                average3 = averageBlockSize(rightLine),
+                                average4 = averageBlockSize(bottomLine);
+                        double average = (average1 + average2 + average3 + average4) / 4.0;
+                        countScreen++;
+                        SaveValues saveValues = new SaveValues((int) average, topLine.size(), leftLine.size(), "" + countScreen);
+                        saveValues.saveBarCode(getApplicationContext(), valueCalc);
+                        saveThisCapture = false;
+                    }
+                }
+            }
+        }).start();
+    }
+
+    public void drawCornerData() {
+        Imgproc.circle(mRgbaGr, pTopLeft, 10, new Scalar(255, 21, 255), 5);
+        Imgproc.circle(mRgbaGr, pTopRight, 10, new Scalar(255, 21, 255), 5);
+        Imgproc.circle(mRgbaGr, pBottomLeft, 10, new Scalar(255, 21, 255), 5);
+        Imgproc.circle(mRgbaGr, pBottomRight, 10, new Scalar(255, 21, 255), 5);
+        Imgproc.rectangle(mRgbaGr, TopLeftM, TopLeft, new Scalar(12, 28, 181), 5);
+        Imgproc.rectangle(mRgbaGr, TopRightM, TopRight, new Scalar(162, 0, 0), 5);
+        Imgproc.rectangle(mRgbaGr, BottomLeft, BottomLeftM, new Scalar(26, 173, 18), 5);
+        Imgproc.rectangle(mRgbaGr, BottomRight, BottomRightM, new Scalar(12, 28, 181), 5);
     }
 
 
+    public void targetUpdate() {
+        //Grab bottom right point of target view and convert it as the resolution of the camera picture and the phone screen could be different
+        width = mRgbaGr.width(); // what is the width and height of frame
+        height = mRgbaGr.height();
+        TopLeft = conversion(new Point(topLeftTarget.getX() + topLeftTarget.getWidth(), topLeftTarget.getY() + topLeftTarget.getHeight()));
+        TopRight = conversion(new Point(topRightTarget.getX() + topRightTarget.getWidth(), topRightTarget.getY() + topRightTarget.getHeight()));
+        BottomLeft = conversion(new Point(bottomLeftTarget.getX() + bottomLeftTarget.getWidth(), bottomLeftTarget.getY() + bottomLeftTarget.getHeight()));
+        BottomRight = conversion(new Point(bottomRightTarget.getX() + bottomRightTarget.getWidth(), bottomRightTarget.getY() + bottomRightTarget.getHeight()));
+
+        //Grab top left do same coversion
+        TopLeftM = conversion(new Point(topLeftTarget.getX(), topLeftTarget.getY()));
+        TopRightM = conversion(new Point(topRightTarget.getX(), topRightTarget.getY()));
+        BottomLeftM = conversion(new Point(bottomLeftTarget.getX(), bottomLeftTarget.getY()));
+        BottomRightM = conversion(new Point(bottomRightTarget.getX(), bottomRightTarget.getY()));
+
+    }
+
+    public boolean findCenterPoints() {
+        pTopLeft = mDetector.getCenterBlack(mRgbaGr, TopLeft, TopLeftM, blueHSV, 0);
+        pTopRight = mDetector.getCenterBlack(mRgbaGr, TopRight, TopRightM, redHSV, 1);
+        pBottomLeft = mDetector.getCenterBlack(mRgbaGr, BottomLeft, BottomLeftM, greenHSV, 2);
+        pBottomRight = mDetector.getCenterBlack(mRgbaGr, BottomRight, BottomRightM, blueHSV, 3);
+        return (pTopLeft.x != -100 && pTopRight.x != -100 && pBottomLeft.x != -100 && pBottomRight.x != -100);
+    }
+
+
+    public void safelyMoveAll() {
+        safeMove(topLeftTarget, conversionX(pTopLeft.x) - (topLeftTarget.getWidth() / 2), (conversionY(pTopLeft.y)) - (topLeftTarget.getWidth() / 2));
+        safeMove(topRightTarget, conversionX(pTopRight.x) - (topLeftTarget.getWidth() / 2), conversionY(pTopRight.y) - (topLeftTarget.getWidth() / 2));
+        safeMove(bottomLeftTarget, conversionX(pBottomLeft.x) - (topLeftTarget.getWidth() / 2), conversionY(pBottomLeft.y) - (topLeftTarget.getWidth() / 2));
+        safeMove(bottomRightTarget, conversionX(pBottomRight.x) - (topLeftTarget.getWidth() / 2), conversionY(pBottomRight.y) - (topLeftTarget.getWidth() / 2));
+    }
 
     public void getColorContour(Mat mRgbaGr, Point point1, Point point2, Scalar color) {
 
@@ -498,11 +597,40 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
             if (p.y > maxY)
                 maxY = (int) p.y;
         }
-        int averageX = (maxX - minX) / points.size();
-        int averageY = (maxY - minY) / points.size();
+        int averageX = -1;
+        int averageY = -1;
+
+        if (points.size() != 0) {
+            averageX = (maxX - minX) / points.size();
+            averageY = (maxY - minY) / points.size();
+        } else {
+
+        }
         return ((averageX + averageY) / 2);
+
     }
 
+    public boolean isYellow(double[] color) {
+        if (color == null) {
+            return false;
+        }
+        if (color[2] < 60) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public boolean isPink(double[] color) {
+        if (color == null) {
+            return false;
+        }
+        if (color[1] < 60) {
+            return true;
+        } else {
+            return false;
+        }
+    }
 
     private Scalar converScalarHsv2Rgba(Scalar hsvColor) {
         Mat pointMatRgba = new Mat();
@@ -587,4 +715,53 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
         DisplayMetrics metrics = getResources().getDisplayMetrics();
         return (float) (p * metrics.heightPixels) / height;
     }
+
+    public void colorSynchDetermination(double[] color, final double[] color2) {
+        boolean checkSame = true;
+        for (int i = 0; i < 3; i++) {
+            if (Math.abs(color[i] - color2[i]) > 40) {
+                checkSame = false;
+            }
+        }
+
+        final double[] colorT = color;
+        if (color != null) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+
+                    whatDoISee.updatePreview(colorT);
+                    whatDoISee2.updatePreview(color2);
+                }
+
+            });
+            if (checkSame) {
+                if (!endedTrans && transmissionStarted) {
+                    if (!startedTrans) {
+                        if (isPink(color)) {
+                            Log.e("state", "start");
+                            startedTrans = true;
+                            saveThisCapture = true;
+                        }
+                    } else {
+                        if (isPink(color) && !isPink(synchBlockColorLast)) {
+                            Log.e("state", "end");
+                            endedTrans = true;
+                            saveThisCapture = true;
+                        } else if (!isPink(color) && isPink(synchBlockColorLast)) {
+                            saveThisCapture = true;
+                            Log.e("state", "first non pink");
+                        } else if (isYellow(synchBlockColorLast) != isYellow(color)) {
+                            saveThisCapture = true;
+                            Log.e("state", "not equal");
+                        } else if (isYellow(color) == isYellow(synchBlockColorLast)) {
+                        }
+                    }
+                } else {
+                }
+                synchBlockColorLast = color;
+            }
+        }
+    }
 }
+

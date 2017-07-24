@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
@@ -36,7 +37,12 @@ public class ColorBlobDetector {
     private Scalar mColorRadius = new Scalar(35, 55, 55, 0);
     private Mat mSpectrum = new Mat();
     private List<MatOfPoint> mContours = new ArrayList<MatOfPoint>();
+    private double[] stateBlock;
+    double xD = 0;
+    double yD = 0;
 
+    double xD2 = 0;
+    double yD2 = 0;
     // Cache
     Mat mPyrDownMat = new Mat();
     Mat mHsvMat = new Mat();
@@ -220,8 +226,8 @@ public class ColorBlobDetector {
                     areaMax = areaT;
                 }
             }
-        }else{
-            Log.e("error corner","couldnt find color contour");
+        } else {
+      //      Log.e("error corner", "couldnt find color contour");
         }
         contours.clear();
         contours.add(matOfPointMax);
@@ -241,34 +247,34 @@ public class ColorBlobDetector {
                         double temp = 0;
                         switch (whichCorner) {
                             case 0:
-                             //   Log.e("Corner", "TL");
+                                //   Log.e("Corner", "TL");
                                 temp = Math.pow(
                                         Math.pow((Math.min(point1.x, point2.x) - ((bounding.x + bounding.width) / 2)), 2)
                                                 + Math.pow(Math.min(point1.y, point2.y) - ((bounding.y + bounding.height) / 2), 2), .5);
                                 break;
                             case 1:
-                             //   Log.e("Corner", "TR");
+                                //   Log.e("Corner", "TR");
                                 temp = Math.pow(
                                         Math.pow((Math.min(point1.x, point2.x) - ((bounding.x + bounding.width) / 2)), 2)
                                                 + Math.pow(Math.max(point1.y, point2.y) - ((bounding.y + bounding.height) / 2), 2), .5);
                                 break;
                             case 2:
 
-                             //   Log.e("Corner", "BL");
+                                //   Log.e("Corner", "BL");
                                 temp = Math.pow(
                                         Math.pow((Math.max(point1.x, point2.x) - ((bounding.x + bounding.width) / 2)), 2)
                                                 + Math.pow(Math.min(point1.y, point2.y) - ((bounding.y + bounding.height) / 2), 2), .5);
                                 break;
                             case 3:
 
-                             //   Log.e("Corner", "BR");
+                                //   Log.e("Corner", "BR");
                                 temp = Math.pow(
                                         Math.pow((Math.max(point1.x, point2.x) - ((bounding.x + bounding.width) / 2)), 2)
                                                 + Math.pow(Math.max(point1.y, point2.y) - ((bounding.y + bounding.height) / 2), 2), .5);
 
                                 break;
                         }
-                    //    Log.e("compare", "temp:" + temp + " " + "min dist: " + minDistanceFromCorner + " s:" + matOfPointList.size());
+                        //    Log.e("compare", "temp:" + temp + " " + "min dist: " + minDistanceFromCorner + " s:" + matOfPointList.size());
                         if (temp < minDistanceFromCorner) {
                             minDistanceFromCorner = temp;
                             minMat = matOfPoint;
@@ -279,23 +285,23 @@ public class ColorBlobDetector {
                 mContours.add(minMat);
             } else {
 
-                Log.e("error corner","couldnt find black contour");
+      //           Log.e("error corner", "couldnt find black contour");
 
                 int blackCount = 0;
-                double blackXSum=0;
-                double blackYSum=0;
+                double blackXSum = 0;
+                double blackYSum = 0;
                 for (int i = rect.x; i < rect.x + rect.width; i++) {
                     for (int j = rect.y; j < rect.y + rect.height; j++) {
                         if (checkBlack(mRgbaGr.get(j, i))) {
                             blackCount++;
-                            blackXSum+=i;
-                            blackYSum+=j;
+                            blackXSum += i;
+                            blackYSum += j;
                         }
                     }
                 }
 
-                if(blackCount!=0){
-                    return new Point(blackXSum/blackCount, blackYSum/blackCount);
+                if (blackCount != 0) {
+                    return new Point(blackXSum / blackCount, blackYSum / blackCount);
                 }
 
                 Log.e("no", "black found: " + blackCount);
@@ -351,15 +357,14 @@ public class ColorBlobDetector {
                     //if we arent in black and we havent seen a black we are in white space :O
                 } else {
                     //so you found the end of the black space but is that region big enough to be a refrence block or just something weird
-                    Log.e("size",""+(i-startBlack));
-                    if (i - startBlack >= 8) {
+                   if (i - startBlack >= 8) {
 
                         int blackX = (startBlack + ((i - startBlack) / 2));
                         if (points.size() >= 1) {
                             points.add(new Point(((points.get(points.size() - 1).x + blackX) / 2), (slope * ((points.get(points.size() - 1).x + blackX) / 2)) + yIntercept));
                         }
                         points.add(new Point(blackX, (slope * i) + yIntercept));
-                    }else{
+                    } else {
 
                     }
                     startBlack = -1;
@@ -379,11 +384,12 @@ public class ColorBlobDetector {
         double yIntercept = start.y - (start.x * slope);
         int startBlack = -1;
         int getOutBlack = (int) start.y;
+        int state = 0;
         while (checkBlack(mat.get(getOutBlack, (int) ((getOutBlack - yIntercept) / slope)))) {
             getOutBlack += 1;
         }
-        int endBeforeBlack= (int)end.y;
-        while (checkBlack(mat.get(endBeforeBlack, (int) ((endBeforeBlack- yIntercept) / slope)))) {
+        int endBeforeBlack = (int) end.y;
+        while (checkBlack(mat.get(endBeforeBlack, (int) ((endBeforeBlack - yIntercept) / slope)))) {
             endBeforeBlack -= 1;
         }
         for (int i = getOutBlack; i < endBeforeBlack; i++) {
@@ -399,7 +405,13 @@ public class ColorBlobDetector {
                     if (i - startBlack > 5) {
                         int blackY = startBlack + ((i - startBlack) / 2);
                         if (points.size() >= 1) {
-                            points.add(new Point(((((points.get(points.size() - 1).y + blackY) / 2)) - yIntercept) / slope, (points.get(points.size() - 1).y + blackY) / 2));
+                            if(i==getOutBlack){
+                                xD = ((((points.get(points.size() - 1).y + blackY) / 2)) - yIntercept) / slope;
+                                yD = (points.get(points.size() - 1).y + blackY) / 2;
+                            }
+                             xD = ((((points.get(points.size() - 1).y + blackY) / 2)) - yIntercept) / slope;
+                            yD = (points.get(points.size() - 1).y + blackY) / 2;
+                             points.add(new Point(xD, yD));
                         }
                         points.add(new Point(((int) (blackY - yIntercept) / slope), blackY));
                     }
@@ -408,6 +420,15 @@ public class ColorBlobDetector {
             }
         }
         return points;
+
+    }
+
+    public double[] getStateBlock(Mat mat) {
+        return mat.get((int) yD, (int) xD);
+    }
+
+    public double[] getStateBlock2(Mat mat) {
+        return mat.get((int) yD, (int) xD);
     }
 
     public boolean checkBlack(double[] d) {
