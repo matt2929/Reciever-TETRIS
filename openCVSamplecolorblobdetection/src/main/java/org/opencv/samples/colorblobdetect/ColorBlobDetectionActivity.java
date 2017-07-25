@@ -244,9 +244,10 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
             public void onClick(View view) {
                 transmissionStarted = true;
                 saveDatum.setVisibility(View.GONE);
-                UpdateRate = Long.valueOf(5000);
+                UpdateRate = Long.valueOf(200);
             }
         });
+        whatDoISee = (WhatDoISee) findViewById(R.id.what);
         whatDoISee = (WhatDoISee) findViewById(R.id.what);
         whatDoISee2 = (WhatDoISee) findViewById(R.id.what2);
     }
@@ -343,42 +344,42 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
     public boolean getTheTimingBlocks() {
         List<Point> pointsTemp1 = mDetector.findTimingHorizontal(mRgbaGr, pTopLeft, pTopRight);
         List<Point> pointsTemp2 = mDetector.findTimingHorizontal(mRgbaGr, pBottomLeft, pBottomRight);
-        if (pointsTemp1.size() == pointsTemp2.size()) {
+        //if (pointsTemp1.size() == pointsTemp2.size()) {
             bottomLine = mDetector.findTimingHorizontal(mRgbaGr, pTopLeft, pTopRight);
             topLine = mDetector.findTimingHorizontal(mRgbaGr, pBottomLeft, pBottomRight);
-        } else {
-            return false;
-        }
+        //} else {
+        //    return false;
+       // }
         pointsTemp1 = mDetector.findTimingVerticle(mRgbaGr, pTopLeft, pBottomLeft);
         pointsTemp2 = mDetector.findTimingVerticle(mRgbaGr, pTopRight, pBottomRight);
-        if (pointsTemp1.size() == pointsTemp2.size()) {
+        //if (pointsTemp1.size() == pointsTemp2.size()) {
             leftLine = mDetector.findTimingVerticle(mRgbaGr, pTopLeft, pBottomLeft);
             rightLine = mDetector.findTimingVerticle(mRgbaGr, pTopRight, pBottomRight);
-        } else {
-            return false;
-        }
-        if (bottomLine.size() != 0 && leftLine.size() != 0) {
+        //} else {
+        //    return false;
+        //}
+       // if (bottomLine.size() != 0 && leftLine.size() != 0) {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
                     saveDatum.setBackgroundColor(Color.WHITE);
                 }
             });
-            return true;
-        }
-        runOnUiThread(new Runnable() {
+           return true;
+        //}
+        /*runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 saveDatum.setBackgroundColor(Color.YELLOW);
             }
         });
-        return false;
+        //return false;*/
     }
 
     public void getInnerGrid() {
         innerGrid.clear();
-        for (int y = 0; y < leftLine.size(); y++) {
-            for (int x = 0; x < topLine.size(); x++) {
+        for (int y = 0; y < Math.min(leftLine.size(),rightLine.size()); y++) {
+            for (int x = 0; x < Math.min(topLine.size(),bottomLine.size()); x++) {
                 //watch your step line intersect equation below
                 //this is where we draw every point that lies on the matrix of colors
 
@@ -395,21 +396,21 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
     }
 
     public Mat onCameraFrame(CvCameraViewFrame inputFrame) {
-        Long timeShortWise =System.currentTimeMillis();
-        Long timeLongWise =System.currentTimeMillis();
+        Long timeShortWise = System.currentTimeMillis();
+        Long timeLongWise = System.currentTimeMillis();
         mRgbaGr = inputFrame.rgba();
         if (Math.abs(System.currentTimeMillis() - LastTime) > UpdateRate || pTopLeft == null) {
-            timeShortWise =System.currentTimeMillis();
+            timeShortWise = System.currentTimeMillis();
             targetUpdate();
-            Log.e("target update",""+Math.abs(timeShortWise-System.currentTimeMillis()));
-            timeShortWise =System.currentTimeMillis();
+            Log.e("target update", "" + Math.abs(timeShortWise - System.currentTimeMillis()));
+            timeShortWise = System.currentTimeMillis();
             if (findCenterPoints()) {
                 safelyMoveAll();
-                Log.e("safely move all",""+Math.abs(timeShortWise-System.currentTimeMillis()));
-                timeShortWise =System.currentTimeMillis();
+                Log.e("safely move all", "" + Math.abs(timeShortWise - System.currentTimeMillis()));
+                timeShortWise = System.currentTimeMillis();
                 if (getTheTimingBlocks()) {
-                    Log.e("timing block",""+Math.abs(timeShortWise-System.currentTimeMillis()));
-                    timeShortWise =System.currentTimeMillis();
+                    Log.e("timing block", "" + Math.abs(timeShortWise - System.currentTimeMillis()));
+                    timeShortWise = System.currentTimeMillis();
                     hasHappenedOnce = true;
                 } else {
                 }
@@ -417,28 +418,31 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
             }
             LastTime = System.currentTimeMillis();
         }
-        Log.e("synch","Start\n");
+        Log.e("synch", "Start\n");
 
-        if (leftLine != null && bottomLine != null) {
+            if (leftLine != null && bottomLine != null) {
             double[] currentStateBlock = mDetector.getStateBlock(mRgbaGr);
             double[] currentStateBlock2 = mDetector.getStateBlock2(mRgbaGr);
             colorSynchDetermination(currentStateBlock, currentStateBlock2);
-            Log.e("synch",""+Math.abs(timeShortWise-System.currentTimeMillis()));
-            timeShortWise =System.currentTimeMillis();
+            Log.e("synch", "" + Math.abs(timeShortWise - System.currentTimeMillis()));
+            timeShortWise = System.currentTimeMillis();
             getInnerGrid();
-            Log.e("inner grid",""+Math.abs(timeShortWise-System.currentTimeMillis()));
-            timeShortWise =System.currentTimeMillis();
-            saveRoutine(determineColors());
-            Log.e("save & determine colors",""+Math.abs(timeShortWise-System.currentTimeMillis()));
-            timeShortWise =System.currentTimeMillis();
+            Log.e("inner grid", "" + Math.abs(timeShortWise - System.currentTimeMillis()));
+            timeShortWise = System.currentTimeMillis();
+            if(saveThisCapture) {
+                saveRoutine(determineColors());
+
+            }
+            Log.e("save & determine colors", "" + Math.abs(timeShortWise - System.currentTimeMillis()));
+            timeShortWise = System.currentTimeMillis();
             drawTimingAndLine();
-            Log.e("draw timing and line",""+Math.abs(timeShortWise-System.currentTimeMillis()));
-            timeShortWise =System.currentTimeMillis();
+            Log.e("draw timing and line", "" + Math.abs(timeShortWise - System.currentTimeMillis()));
+            timeShortWise = System.currentTimeMillis();
         }
         drawCornerData();
-        Log.e("corner draw",""+Math.abs(timeShortWise-System.currentTimeMillis()));
-        timeShortWise =System.currentTimeMillis();
-        Log.e("synch-end","\nEND\nTotal:"+Math.abs(timeLongWise -System.currentTimeMillis()));
+        Log.e("corner draw", "" + Math.abs(timeShortWise - System.currentTimeMillis()));
+        timeShortWise = System.currentTimeMillis();
+        Log.e("synch-end", "\nEND\nTotal:" + Math.abs(timeLongWise - System.currentTimeMillis()));
         return mRgbaGr;
     }
 
@@ -513,14 +517,13 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
         Imgproc.line(mRgbaGr, pTopLeft, pBottomLeft, new Scalar(117, 210, 173), 5);
         Imgproc.line(mRgbaGr, pBottomLeft, pBottomRight, new Scalar(117, 210, 173), 5);
         Imgproc.line(mRgbaGr, pTopRight, pBottomRight, new Scalar(117, 210, 173), 5);
-
     }
 
     public void saveRoutine(final ArrayList<String> valueCalc) {
         new Thread(new Runnable() {
             public void run() {
                 if (valueCalc != null) {
-                    if (saveThisCapture) {
+                        Log.e("save", "here i go saving again");
                         Integer average1 = averageBlockSize(topLine),
                                 average2 = averageBlockSize(leftLine),
                                 average3 = averageBlockSize(rightLine),
@@ -529,11 +532,12 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
                         countScreen++;
                         SaveValues saveValues = new SaveValues((int) average, topLine.size(), leftLine.size(), "" + countScreen);
                         saveValues.saveBarCode(getApplicationContext(), valueCalc);
-                        saveThisCapture = false;
-                    }
+
                 }
             }
         }).start();
+        saveThisCapture = false;
+
     }
 
     public void drawCornerData() {
@@ -717,51 +721,39 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
     }
 
     public void colorSynchDetermination(double[] color, final double[] color2) {
-        boolean checkSame = true;
-        for (int i = 0; i < 3; i++) {
-            if (Math.abs(color[i] - color2[i]) > 40) {
-                checkSame = false;
-            }
-        }
-
         final double[] colorT = color;
-        if (color != null) {
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
 
-                    whatDoISee.updatePreview(colorT);
-                    whatDoISee2.updatePreview(color2);
-                }
-
-            });
-            if (checkSame) {
-                if (!endedTrans && transmissionStarted) {
-                    if (!startedTrans) {
-                        if (isPink(color)) {
-                            Log.e("state", "start");
-                            startedTrans = true;
-                            saveThisCapture = true;
-                        }
-                    } else {
-                        if (isPink(color) && !isPink(synchBlockColorLast)) {
-                            Log.e("state", "end");
-                            endedTrans = true;
-                            saveThisCapture = true;
-                        } else if (!isPink(color) && isPink(synchBlockColorLast)) {
-                            saveThisCapture = true;
-                            Log.e("state", "first non pink");
-                        } else if (isYellow(synchBlockColorLast) != isYellow(color)) {
-                            saveThisCapture = true;
-                            Log.e("state", "not equal");
-                        } else if (isYellow(color) == isYellow(synchBlockColorLast)) {
-                        }
-                    }
-                } else {
-                }
-                synchBlockColorLast = color;
+                whatDoISee.updatePreview(colorT);
             }
+
+        });
+        if (!endedTrans && transmissionStarted) {
+            if (!startedTrans) {
+                if (isPink(color)) {
+                    Log.e("state", "start");
+                    startedTrans = true;
+                    saveThisCapture = true;
+                }
+            } else {
+                if (isPink(color) && !isPink(synchBlockColorLast)) {
+                    Log.e("state", "end");
+                    endedTrans = true;
+                    saveThisCapture = true;
+                } else if (!isPink(color) && isPink(synchBlockColorLast)) {
+                    saveThisCapture = true;
+                    Log.e("state", "first non pink");
+                } else if (isYellow(synchBlockColorLast) != isYellow(color)) {
+                    saveThisCapture = true;
+                    Log.e("state", "not equal");
+                } else if (isYellow(color) == isYellow(synchBlockColorLast)) {
+                }
+            }
+        } else {
         }
+        synchBlockColorLast = color;
     }
 }
 
