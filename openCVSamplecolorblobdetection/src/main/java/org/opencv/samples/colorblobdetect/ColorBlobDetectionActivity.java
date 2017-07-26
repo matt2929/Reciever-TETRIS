@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.LinkedList;
 import java.util.List;
 
 import org.opencv.android.BaseLoaderCallback;
@@ -52,6 +53,8 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
     private boolean saveThisCapture = false;
     //use view to hand select corners
     WhatDoISee whatDoISee, whatDoISee2;
+    Boolean lastFrame = false;
+
     TargetView topLeftTarget;
     TargetView topRightTarget;
     TargetView bottomRightTarget;
@@ -75,6 +78,7 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
     Point TopRightM;
     Point BottomLeftM;
     Point BottomRightM;
+    SaveValues saveValues;
 
     private Boolean startedTrans = false;
     private Boolean endedTrans = false;
@@ -122,6 +126,8 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
         mOpenCvCameraView.enableFpsMeter();
         mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE);
         mOpenCvCameraView.setCvCameraViewListener(this);
+        saveValues = new SaveValues(getApplicationContext(), 0, 0, 0, "" + 0);
+
         //Tell target view what to do when you click on it -------------------------------------------------------------------------------------------------
         topLeftTarget = (TargetView) findViewById(R.id.topLeft);
         topLeftTarget.setOnTouchListener(new OnTouchListener() {
@@ -244,7 +250,7 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
             public void onClick(View view) {
                 transmissionStarted = true;
                 saveDatum.setVisibility(View.GONE);
-                UpdateRate = Long.valueOf(200);
+                UpdateRate = Long.valueOf(2000);
             }
         });
         whatDoISee = (WhatDoISee) findViewById(R.id.what);
@@ -324,18 +330,11 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
         for (int i = 0; i < mBlobColorHsv.val.length; i++)
             mBlobColorHsv.val[i] /= pointCount;
 
-
         mBlobColorRgba = converScalarHsv2Rgba(mBlobColorHsv);
-
-        Log.i(TAG, "Touched rgba color: (" + mBlobColorHsv.val[0] + ", " + mBlobColorHsv.val[1] +
-                ", " + mBlobColorHsv.val[2] + ", " + mBlobColorHsv.val[3] + ")");
-
         mDetector.setHsvColor(mBlobColorHsv);
-
         Imgproc.resize(mDetector.getSpectrum(), mSpectrum, SPECTRUM_SIZE);
 
         mIsColorSelected = true;
-
         touchedRegionRgba.release();
         touchedRegionHsv.release();
         return false; // don't need subsequent touch events
@@ -344,45 +343,51 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
     public boolean getTheTimingBlocks() {
         List<Point> pointsTemp1 = mDetector.findTimingHorizontal(mRgbaGr, pTopLeft, pTopRight);
         List<Point> pointsTemp2 = mDetector.findTimingHorizontal(mRgbaGr, pBottomLeft, pBottomRight);
-        //if (pointsTemp1.size() == pointsTemp2.size()) {
-            bottomLine = mDetector.findTimingHorizontal(mRgbaGr, pTopLeft, pTopRight);
-            topLine = mDetector.findTimingHorizontal(mRgbaGr, pBottomLeft, pBottomRight);
-        //} else {
-        //    return false;
-       // }
+        if (pointsTemp1.size() == pointsTemp2.size()) {
+            bottomLine = pointsTemp1;
+            topLine = pointsTemp2;
+        } else {
+            return false;
+        }
         pointsTemp1 = mDetector.findTimingVerticle(mRgbaGr, pTopLeft, pBottomLeft);
         pointsTemp2 = mDetector.findTimingVerticle(mRgbaGr, pTopRight, pBottomRight);
-        //if (pointsTemp1.size() == pointsTemp2.size()) {
+        if (pointsTemp1.size() == pointsTemp2.size()) {
             leftLine = mDetector.findTimingVerticle(mRgbaGr, pTopLeft, pBottomLeft);
             rightLine = mDetector.findTimingVerticle(mRgbaGr, pTopRight, pBottomRight);
-        //} else {
-        //    return false;
-        //}
-       // if (bottomLine.size() != 0 && leftLine.size() != 0) {
+        } else {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
                     saveDatum.setBackgroundColor(Color.WHITE);
                 }
             });
-           return true;
-        //}
-        /*runOnUiThread(new Runnable() {
+
+            return false;
+        }
+        if (bottomLine.size() != 0 && leftLine.size() != 0 && topLine.size() == bottomLine.size() && leftLine.size() == rightLine.size()) {
+        } else {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    saveDatum.setBackgroundColor(Color.WHITE);
+                }
+            });
+
+            return false;
+        }
+        runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 saveDatum.setBackgroundColor(Color.YELLOW);
             }
         });
-        //return false;*/
+        return true;
     }
 
     public void getInnerGrid() {
         innerGrid.clear();
-        for (int y = 0; y < Math.min(leftLine.size(),rightLine.size()); y++) {
-            for (int x = 0; x < Math.min(topLine.size(),bottomLine.size()); x++) {
-                //watch your step line intersect equation below
-                //this is where we draw every point that lies on the matrix of colors
-
+        for (int y = 0; y < Math.min(leftLine.size(), rightLine.size()); y++) {
+            for (int x = 0; x < Math.min(topLine.size(), bottomLine.size()); x++) {
                 double slope1 = (leftLine.get(y).y - rightLine.get(y).y) / (leftLine.get(y).x - rightLine.get(y).x);
                 double yIntercept1 = leftLine.get(y).y - (slope1 * leftLine.get(y).x);
                 double slope2 = (topLine.get(x).y - bottomLine.get(x).y) / (topLine.get(x).x - bottomLine.get(x).x);
@@ -396,21 +401,12 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
     }
 
     public Mat onCameraFrame(CvCameraViewFrame inputFrame) {
-        Long timeShortWise = System.currentTimeMillis();
-        Long timeLongWise = System.currentTimeMillis();
         mRgbaGr = inputFrame.rgba();
         if (Math.abs(System.currentTimeMillis() - LastTime) > UpdateRate || pTopLeft == null) {
-            timeShortWise = System.currentTimeMillis();
             targetUpdate();
-            Log.e("target update", "" + Math.abs(timeShortWise - System.currentTimeMillis()));
-            timeShortWise = System.currentTimeMillis();
             if (findCenterPoints()) {
                 safelyMoveAll();
-                Log.e("safely move all", "" + Math.abs(timeShortWise - System.currentTimeMillis()));
-                timeShortWise = System.currentTimeMillis();
                 if (getTheTimingBlocks()) {
-                    Log.e("timing block", "" + Math.abs(timeShortWise - System.currentTimeMillis()));
-                    timeShortWise = System.currentTimeMillis();
                     hasHappenedOnce = true;
                 } else {
                 }
@@ -418,41 +414,25 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
             }
             LastTime = System.currentTimeMillis();
         }
-        Log.e("synch", "Start\n");
-
-            if (leftLine != null && bottomLine != null) {
+        if (leftLine != null && bottomLine != null) {
             double[] currentStateBlock = mDetector.getStateBlock(mRgbaGr);
-            double[] currentStateBlock2 = mDetector.getStateBlock2(mRgbaGr);
-            colorSynchDetermination(currentStateBlock, currentStateBlock2);
-            Log.e("synch", "" + Math.abs(timeShortWise - System.currentTimeMillis()));
-            timeShortWise = System.currentTimeMillis();
+            colorSynchDetermination(currentStateBlock);
             getInnerGrid();
-            Log.e("inner grid", "" + Math.abs(timeShortWise - System.currentTimeMillis()));
-            timeShortWise = System.currentTimeMillis();
-            if(saveThisCapture) {
+            if (saveThisCapture) {
                 saveRoutine(determineColors());
-
             }
-            Log.e("save & determine colors", "" + Math.abs(timeShortWise - System.currentTimeMillis()));
-            timeShortWise = System.currentTimeMillis();
-            drawTimingAndLine();
-            Log.e("draw timing and line", "" + Math.abs(timeShortWise - System.currentTimeMillis()));
-            timeShortWise = System.currentTimeMillis();
+            if (!startedTrans) {
+                drawTimingAndLine();
+            }
         }
         drawCornerData();
-        Log.e("corner draw", "" + Math.abs(timeShortWise - System.currentTimeMillis()));
-        timeShortWise = System.currentTimeMillis();
-        Log.e("synch-end", "\nEND\nTotal:" + Math.abs(timeLongWise - System.currentTimeMillis()));
         return mRgbaGr;
     }
 
-
-    public ArrayList<String> determineColors() {
-        ArrayList<String> valueCalc = new ArrayList<>();
-        int colorChoice = 0;
+    public LinkedList<String> determineColors() {
+        LinkedList<String> valueCalc = new LinkedList<>();
         for (int p = 0; p < innerGrid.size(); p++) {
             if (saveThisCapture) {
-                int[] colorLikiness = new int[]{0, 0, 0};
                 double[] color = mRgbaGr.get((int) innerGrid.get(p).y, (int) innerGrid.get(p).x);
                 double whiteDiff, blueDiff, greenDiff, redDiff;
                 double[] greenRGB = new double[]{0, 255, 0, 0.0};
@@ -489,11 +469,6 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
                         break;
                 }
             }
-            if (colorChoice != 255) {
-                colorChoice++;
-            }
-            Imgproc.circle(mRgbaGr, innerGrid.get(p), 1, new Scalar(colorChoice, colorChoice, colorChoice, 255), 1);
-
         }
         return valueCalc;
     }
@@ -519,25 +494,12 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
         Imgproc.line(mRgbaGr, pTopRight, pBottomRight, new Scalar(117, 210, 173), 5);
     }
 
-    public void saveRoutine(final ArrayList<String> valueCalc) {
-        new Thread(new Runnable() {
-            public void run() {
-                if (valueCalc != null) {
-                        Log.e("save", "here i go saving again");
-                        Integer average1 = averageBlockSize(topLine),
-                                average2 = averageBlockSize(leftLine),
-                                average3 = averageBlockSize(rightLine),
-                                average4 = averageBlockSize(bottomLine);
-                        double average = (average1 + average2 + average3 + average4) / 4.0;
-                        countScreen++;
-                        SaveValues saveValues = new SaveValues((int) average, topLine.size(), leftLine.size(), "" + countScreen);
-                        saveValues.saveBarCode(getApplicationContext(), valueCalc);
-
-                }
-            }
-        }).start();
+    public void saveRoutine(final LinkedList<String> valueCalc) {
+        if (valueCalc != null) {
+            saveValues=new SaveValues(getApplicationContext(),0,0,0,""+ (++countScreen));
+            saveValues.saveBarCode(this, getApplicationContext(), valueCalc, lastFrame);
+        }
         saveThisCapture = false;
-
     }
 
     public void drawCornerData() {
@@ -720,12 +682,11 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
         return (float) (p * metrics.heightPixels) / height;
     }
 
-    public void colorSynchDetermination(double[] color, final double[] color2) {
+    public void colorSynchDetermination(double[] color) {
         final double[] colorT = color;
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-
                 whatDoISee.updatePreview(colorT);
             }
 
@@ -742,6 +703,7 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
                     Log.e("state", "end");
                     endedTrans = true;
                     saveThisCapture = true;
+                    lastFrame = true;
                 } else if (!isPink(color) && isPink(synchBlockColorLast)) {
                     saveThisCapture = true;
                     Log.e("state", "first non pink");

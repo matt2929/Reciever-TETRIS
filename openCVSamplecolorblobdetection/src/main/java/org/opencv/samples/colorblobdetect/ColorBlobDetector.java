@@ -18,13 +18,7 @@ import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
 
 import static org.opencv.imgproc.Imgproc.CHAIN_APPROX_SIMPLE;
-import static org.opencv.imgproc.Imgproc.COLOR_BGR2GRAY;
-import static org.opencv.imgproc.Imgproc.RETR_CCOMP;
 import static org.opencv.imgproc.Imgproc.RETR_TREE;
-import static org.opencv.imgproc.Imgproc.THRESH_BINARY;
-import static org.opencv.imgproc.Imgproc.THRESH_BINARY_INV;
-import static org.opencv.imgproc.Imgproc.boundingRect;
-import static org.opencv.imgproc.Imgproc.findContours;
 import static org.opencv.imgproc.Imgproc.minAreaRect;
 
 public class ColorBlobDetector {
@@ -40,7 +34,7 @@ public class ColorBlobDetector {
     private double[] stateBlock;
     double xD = 0;
     double yD = 0;
-
+    int soundThresh = 2;
     double xD2 = 0;
     double yD2 = 0;
     // Cache
@@ -357,7 +351,7 @@ public class ColorBlobDetector {
                     //if we arent in black and we havent seen a black we are in white space :O
                 } else {
                     //so you found the end of the black space but is that region big enough to be a refrence block or just something weird
-                   if (i - startBlack >= 8) {
+                   if (i - startBlack >= soundThresh) {
 
                         int blackX = (startBlack + ((i - startBlack) / 2));
                         if (points.size() >= 1) {
@@ -402,7 +396,7 @@ public class ColorBlobDetector {
             } else {
                 if (startBlack == -1) {
                 } else {
-                    if (i - startBlack > 5) {
+                    if (i - startBlack >=soundThresh) {
                         int blackY = startBlack + ((i - startBlack) / 2);
                         if (points.size() >= 1) {
                             if(i==getOutBlack){

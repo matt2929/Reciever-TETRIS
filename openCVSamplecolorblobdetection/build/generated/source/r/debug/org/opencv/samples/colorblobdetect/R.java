@@ -53,6 +53,9 @@ containing a value of this type.
         public static final int topLeft=0x7f05000b;
         public static final int topRight=0x7f05000a;
         public static final int view=0x7f050008;
+        public static final int view2=0x7f05000e;
+        public static final int what=0x7f05000f;
+        public static final int what2=0x7f05000d;
     }
     public static final class layout {
         public static final int color_blob_detection_surface_view=0x7f030000;
