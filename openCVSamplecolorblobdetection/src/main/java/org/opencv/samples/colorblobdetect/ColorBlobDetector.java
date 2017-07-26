@@ -43,11 +43,9 @@ public class ColorBlobDetector {
     Mat mMask = new Mat();
     Mat mDilatedMask = new Mat();
     Mat mHierarchy = new Mat();
-
     public void setColorRadius(Scalar radius) {
         mColorRadius = radius;
     }
-
     public void setHsvBlack(Scalar hsvColor) {
         //were looking for black color given doesnt matter but its easier if one is given trust me
         double minH = (hsvColor.val[0] >= mColorRadius.val[0]) ? hsvColor.val[0] - mColorRadius.val[0] : 0;
@@ -433,11 +431,11 @@ public class ColorBlobDetector {
                 double[] valMax = new double[4];
 
                 valMin[0] = 0;//minH;
-                valMax[0] = 190;//maxH;
+                valMax[0] = 50;//maxH;
                 valMin[1] = 0;//hsvColor.val[1] - mColorRadius.val[1];
-                valMax[1] = 255;//hsvColor.val[1] + mColorRadius.val[1];
+                valMax[1] = 50;//hsvColor.val[1] + mColorRadius.val[1];
                 valMin[2] = 0;//hsvColor.val[2] - mColorRadius.val[2];
-                valMax[2] = 180;//hsvColor.val[2] + mColorRadius.val[2];
+                valMax[2] = 50;//hsvColor.val[2] + mColorRadius.val[2];
                 valMin[3] = 0;
                 valMax[3] = 255;
 
