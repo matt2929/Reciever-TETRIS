@@ -88,7 +88,7 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
     int widthBoxCount = 91;
     int heightBoxCount = 171;
     int frames = 6;
-    byte[] binStream = new byte[(widthBoxCount*heightBoxCount*frames)+1];
+    byte[] binStream = new byte[(widthBoxCount*heightBoxCount*frames)];
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
         @Override
         public void onManagerConnected(int status) {
@@ -438,7 +438,6 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
         }
         drawCornerData();
         Log.e("fps", "" + Math.abs(System.currentTimeMillis() - start));
-
         return mRgbaGr;
 
     }
@@ -484,15 +483,17 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
                         break;
                 }
                 countStream++;
-                if(endedTrans){
-                    saveValues.saveBarCode(this, getApplicationContext(), binStream);
-                }
+
             }
 
 
             if (!transmissionStarted) {
                 Imgproc.circle(mRgbaGr, innerGrid.get(p), 2, new Scalar(100, 200, 200));
             }
+        }
+        if(endedTrans){
+            saveValues.saveBarCode(this, getApplicationContext(), binStream);
+            saveThisCapture=false;
         }
     }
 

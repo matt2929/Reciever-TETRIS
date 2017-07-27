@@ -43,9 +43,10 @@ public class SaveValues {
 
     public void saveBarCode(final Activity activity, final Context context, byte[] colors) {
        try {
-            BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(getAlbumStorageDir(context, filename)));
-          Long start = System.currentTimeMillis();
-            bos.write(colors);
+           Log.e("save","save");
+           BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(getAlbumStorageDir(context, filename)));
+           Long start = System.currentTimeMillis();
+           bos.write(colors);
            Long duration = System.currentTimeMillis()-start;
            System.currentTimeMillis();
         } catch (IOException e1) {
