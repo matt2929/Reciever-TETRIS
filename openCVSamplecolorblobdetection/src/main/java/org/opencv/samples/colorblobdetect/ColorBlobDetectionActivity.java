@@ -85,7 +85,10 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
     private Long LastTime = System.currentTimeMillis();
     float dXTL, dYTL, dXTR, dYTR, dXBL, dYBL, dXBR, dYBR;
     int countStream = 0;
-    byte[] binStream = new byte[100000];
+    int widthBoxCount = 91;
+    int heightBoxCount = 171;
+    int frames = 6;
+    byte[] binStream = new byte[(widthBoxCount*heightBoxCount*frames)+1];
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
         @Override
         public void onManagerConnected(int status) {
@@ -441,7 +444,9 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
     }
 
     public void determineColors() {
+        Log.e("saving","saving"+innerGrid.size());
         for (int p = 0; p < innerGrid.size(); p++) {
+
             if (saveThisCapture) {
                 double[] color = mRgbaGr.get((int) innerGrid.get(p).y, (int) innerGrid.get(p).x);
                 double whiteDiff, blueDiff, greenDiff, redDiff;
@@ -455,7 +460,7 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
                 greenDiff = colorDifference(greenRGB, color);
                 redDiff = colorDifference(redRGB, color);
 
-                double[] findMin = new double[]{whiteDiff, blueDiff, redDiff, greenDiff};
+                double[] findMin = new double[]{whiteDiff, redDiff, greenDiff,blueDiff};
                 int minIndex = -1;
                 double minValue = Double.MAX_VALUE;
                 for (int i = 0; i < findMin.length; i++) {
@@ -479,7 +484,11 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
                         break;
                 }
                 countStream++;
+                if(endedTrans){
+                    saveValues.saveBarCode(this, getApplicationContext(), binStream);
+                }
             }
+
 
             if (!transmissionStarted) {
                 Imgproc.circle(mRgbaGr, innerGrid.get(p), 2, new Scalar(100, 200, 200));
@@ -701,9 +710,6 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
                     Log.e("state", "end");
                     endedTrans = true;
                     saveThisCapture = true;
-                    Log.e("save", "saving");
-                    saveValues.saveBarCode(this, getApplicationContext(), binStream);
-                    Log.e("save", "done");
                 } else if (!isPink(color) && isPink(synchBlockColorLast)) {
                     saveThisCapture = true;
                     Log.e("state", "first non pink");
