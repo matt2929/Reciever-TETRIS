@@ -54,6 +54,7 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
     WhatDoISee whatDoISee, whatDoISee2;
     Boolean lastFrame = false;
 
+    Long determineScreenRefreshRate = System.currentTimeMillis();
     TargetView topLeftTarget;
     TargetView topRightTarget;
     TargetView bottomRightTarget;
@@ -87,8 +88,8 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
     int countStream = 0;
     int widthBoxCount = 91;
     int heightBoxCount = 171;
-    int frames = 6;
-    byte[] binStream = new byte[(widthBoxCount*heightBoxCount*frames)];
+    int frames = 50;
+    byte[] binStream = new byte[(widthBoxCount * heightBoxCount * frames)];
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
         @Override
         public void onManagerConnected(int status) {
@@ -410,12 +411,18 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
     public Mat onCameraFrame(CvCameraViewFrame inputFrame) {
         mRgbaGr = inputFrame.rgba();
         Long start = System.currentTimeMillis();
-
+        //   Log.e("FPS", "[" + (determineScreenRefreshRate - System.currentTimeMillis()) + "]");
+        Long determineCost = System.currentTimeMillis();
+        determineScreenRefreshRate = System.currentTimeMillis();
         if (Math.abs(System.currentTimeMillis() - LastTime) > UpdateRate || pTopLeft == null) {
             targetUpdate();
+            printCost(saveThisCapture, determineCost, "targetUpdate()");
             if (findCenterPoints()) {
+                printCost(saveThisCapture, determineCost, "findCenterPoints()");
                 safelyMoveAll();
+                printCost(saveThisCapture, determineCost, "safelyMoveAll()");
                 if (getTheTimingBlocks()) {
+                    printCost(saveThisCapture, determineCost, "determineTimingBlocks()");
                     hasHappenedOnce = true;
                 } else {
                 }
@@ -426,99 +433,99 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
         if (leftLine != null && bottomLine != null) {
             double[] currentStateBlock = mDetector.getStateBlock(mRgbaGr);
             colorSynchDetermination(currentStateBlock);
+
+            printCost(saveThisCapture, determineCost, "colorSynchDetermine");
             getInnerGrid();
+            printCost(saveThisCapture, determineCost, "InnerGrid");
             if (saveThisCapture) {
                 determineColors();
-                Log.e("fps, save", "" + Math.abs(System.currentTimeMillis() - start));
+                printCost(saveThisCapture, determineCost, "determine Colors");
+                //           Log.e("fps, save", "" + Math.abs(System.currentTimeMillis() - start));
                 saveThisCapture = false;
             }
             if (!startedTrans) {
                 drawTimingAndLine();
+                gridDraw();
+                printCost(saveThisCapture, determineCost, "draw timing");
             }
         }
         drawCornerData();
+        //drawTimingAndLine();
+
         Log.e("fps", "" + Math.abs(System.currentTimeMillis() - start));
         return mRgbaGr;
 
     }
 
-    public void determineColors() {
-        Log.e("saving","saving"+innerGrid.size());
+    public void gridDraw() {
         for (int p = 0; p < innerGrid.size(); p++) {
+            Imgproc.circle(mRgbaGr, innerGrid.get(p), 2, new Scalar(10, 200, 200));
 
-            if (saveThisCapture) {
-                double[] color = mRgbaGr.get((int) innerGrid.get(p).y, (int) innerGrid.get(p).x);
-                double whiteDiff, blueDiff, greenDiff, redDiff;
-                double[] greenRGB = new double[]{0, 255, 0, 0.0};
-                double[] redRGB = new double[]{255, 0, 0, 0.0};
-                double[] blueRGB = new double[]{0, 0, 255, 0.0};
-                double[] whiteRGB = new double[]{255, 255, 255, 0.0};
-
-                whiteDiff = colorDifference(whiteRGB, color);
-                blueDiff = colorDifference(blueRGB, color);
-                greenDiff = colorDifference(greenRGB, color);
-                redDiff = colorDifference(redRGB, color);
-
-                double[] findMin = new double[]{whiteDiff, redDiff, greenDiff,blueDiff};
-                int minIndex = -1;
-                double minValue = Double.MAX_VALUE;
-                for (int i = 0; i < findMin.length; i++) {
-                    if (findMin[i] < minValue) {
-                        minIndex = i;
-                        minValue = findMin[i];
-                    }
-                }
-                switch (minIndex) {
-                    case 0:
-                        binStream[countStream] = ((byte) 0);
-                        break;
-                    case 1:
-                        binStream[countStream] = (byte) 1;
-                        break;
-                    case 2:
-                        binStream[countStream] = (byte) 2;
-                        break;
-                    case 3:
-                        binStream[countStream] = (byte) 3;
-                        break;
-                }
-                countStream++;
-
-            }
-
-
-            if (!transmissionStarted) {
-                Imgproc.circle(mRgbaGr, innerGrid.get(p), 2, new Scalar(100, 200, 200));
-            }
-        }
-        if(endedTrans){
-            saveValues.saveBarCode(this, getApplicationContext(), binStream);
-            saveThisCapture=false;
         }
     }
 
+    public void determineColors() {
+        Log.e("saving", "saving" + innerGrid.size());
+        int thresehold = 150;
+        for (int p = 0; p < innerGrid.size(); p++) {
+            if (saveThisCapture) {
+                double[] color = mRgbaGr.get((int) innerGrid.get(p).y, (int) innerGrid.get(p).x);
+                //   Log.e("colorRGB", "R[" + color[0] + "] G[ " + color[1] + "] B[" + color[2] + "]");
+                if (color[0] > thresehold && color[1] > thresehold && color[2] > thresehold) {
+                    binStream[countStream] = ((byte) 0);
+                } else if (color[0] > thresehold) {
+                    binStream[countStream] = (byte) 1;
+                } else if (color[1] > thresehold) {
+                    binStream[countStream] = (byte) 2;
+                } else if (color[2] > thresehold) {
+                    binStream[countStream] = (byte) 3;
+                } else {
+                    Log.e("none", "couldnt determine");
+                }
+            }
+            countStream++;
+        }
+        if (endedTrans)
+
+        {
+            saveValues.saveBarCode(this, getApplicationContext(), binStream);
+            saveThisCapture = false;
+        }
+
+    }
+
     public void drawTimingAndLine() {
+        boolean b = false;
         for (Point p : topLine) {
-            Imgproc.circle(mRgbaGr, p, 1, new Scalar(23, 255, 143, 255), 1);
-
+            if (b)
+                Imgproc.circle(mRgbaGr, p, 5, new Scalar(23, 255, 143, 255), 5);
+            b = !b;
         }
+        b = false;
         for (Point p : bottomLine) {
-            Imgproc.circle(mRgbaGr, p, 1, new Scalar(23, 255, 143, 255), 1);
+            if (b)
+                Imgproc.circle(mRgbaGr, p, 5, new Scalar(23, 255, 143, 255), 5);
+            b = !b;
         }
+        b = false;
         for (Point p : leftLine) {
-            Imgproc.circle(mRgbaGr, p, 1, new Scalar(23, 255, 143, 255), 1);
+            if (b)
+                Imgproc.circle(mRgbaGr, p, 5, new Scalar(23, 255, 143, 255), 5);
+            b = !b;
         }
-
+        b = false;
         for (Point p : rightLine) {
-            Imgproc.circle(mRgbaGr, p, 1, new Scalar(23, 255, 143, 255), 1);
+            if (b)
+                Imgproc.circle(mRgbaGr, p, 5, new Scalar(23, 255, 143, 255), 5);
+            b = !b;
         }
     }
 
     public void drawCornerData() {
-        Imgproc.circle(mRgbaGr, pTopLeft, 2, new Scalar(255, 21, 255), 2);
-        Imgproc.circle(mRgbaGr, pTopRight, 2, new Scalar(255, 21, 255), 2);
-        Imgproc.circle(mRgbaGr, pBottomLeft, 2, new Scalar(255, 21, 255), 2);
-        Imgproc.circle(mRgbaGr, pBottomRight, 2, new Scalar(255, 21, 255), 2);
+        Imgproc.circle(mRgbaGr, pTopLeft, 15, new Scalar(255, 21, 255), 15);
+        Imgproc.circle(mRgbaGr, pTopRight, 15, new Scalar(255, 21, 255), 15);
+        Imgproc.circle(mRgbaGr, pBottomLeft, 15, new Scalar(255, 21, 255), 15);
+        Imgproc.circle(mRgbaGr, pBottomRight, 15, new Scalar(255, 21, 255), 15);
         Imgproc.rectangle(mRgbaGr, TopLeftM, TopLeft, new Scalar(12, 28, 181), 5);
         Imgproc.rectangle(mRgbaGr, TopRightM, TopRight, new Scalar(162, 0, 0), 5);
         Imgproc.rectangle(mRgbaGr, BottomLeft, BottomLeftM, new Scalar(26, 173, 18), 5);
@@ -723,5 +730,12 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
         } else {
         }
         synchBlockColorLast = color;
+    }
+
+    public void printCost(boolean saveThisCapture, Long time, String name) {
+        if (saveThisCapture) {
+            Log.e("determine save cost ", name + Math.abs(System.currentTimeMillis() - time));
+        }
+        time = System.currentTimeMillis();
     }
 }
