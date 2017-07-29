@@ -81,8 +81,9 @@
         layout_toRightOf="@+id/bottomRight"
         android:layout_width="50dp"
         android:layout_height="50dp"
-        android:layout_alignParentBottom="true"
-        android:layout_toLeftOf="@+id/what" />
+        android:layout_above="@+id/what"
+        android:layout_alignParentRight="true"
+        android:visibility="gone" />
 
     <view
         android:id="@+id/what"

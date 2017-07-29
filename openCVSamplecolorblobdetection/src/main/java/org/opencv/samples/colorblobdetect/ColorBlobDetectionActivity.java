@@ -256,7 +256,7 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
             public void onClick(View view) {
                 transmissionStarted = true;
                 saveDatum.setVisibility(View.GONE);
-                UpdateRate = Long.valueOf(2000);
+                UpdateRate = Long.valueOf(100000);
             }
         });
         whatDoISee = (WhatDoISee) findViewById(R.id.what);
@@ -352,7 +352,6 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
         if (pointsTemp1.size() == pointsTemp2.size()) {
             bottomLine = pointsTemp1;
             topLine = pointsTemp2;
-            Log.e("widht&height", "w:" + bottomLine.size());
         } else {
             return false;
         }
@@ -361,7 +360,6 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
         if (pointsTemp1.size() == pointsTemp2.size()) {
             leftLine = mDetector.findTimingVerticle(mRgbaGr, pTopLeft, pBottomLeft);
             rightLine = mDetector.findTimingVerticle(mRgbaGr, pTopRight, pBottomRight);
-            Log.e("widht&height", "h:" + leftLine.size());
         } else {
             runOnUiThread(new Runnable() {
                 @Override
@@ -410,10 +408,10 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
 
     public Mat onCameraFrame(CvCameraViewFrame inputFrame) {
         mRgbaGr = inputFrame.rgba();
-        Long start = System.currentTimeMillis();
-        //   Log.e("FPS", "[" + (determineScreenRefreshRate - System.currentTimeMillis()) + "]");
         Long determineCost = System.currentTimeMillis();
+        Log.e("FrameRate: ",Math.abs(determineScreenRefreshRate-System.currentTimeMillis())+" ms");
         determineScreenRefreshRate = System.currentTimeMillis();
+
         if (Math.abs(System.currentTimeMillis() - LastTime) > UpdateRate || pTopLeft == null) {
             targetUpdate();
             printCost(saveThisCapture, determineCost, "targetUpdate()");
@@ -452,7 +450,7 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
         drawCornerData();
         //drawTimingAndLine();
 
-        Log.e("fps", "" + Math.abs(System.currentTimeMillis() - start));
+   //     Log.e("fps", "" + Math.abs(System.currentTimeMillis() - start));
         return mRgbaGr;
 
     }
@@ -465,7 +463,7 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
     }
 
     public void determineColors() {
-        Log.e("saving", "saving" + innerGrid.size());
+     //   Log.e("saving", "saving" + innerGrid.size());
         int thresehold = 150;
         for (int p = 0; p < innerGrid.size(); p++) {
             if (saveThisCapture) {
@@ -480,7 +478,7 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
                 } else if (color[2] > thresehold) {
                     binStream[countStream] = (byte) 3;
                 } else {
-                    Log.e("none", "couldnt determine");
+              //      Log.e("none", "couldnt determine");
                 }
             }
             countStream++;
@@ -733,9 +731,9 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
     }
 
     public void printCost(boolean saveThisCapture, Long time, String name) {
-        if (saveThisCapture) {
-            Log.e("determine save cost ", name + Math.abs(System.currentTimeMillis() - time));
-        }
+        //if (saveThisCapture) {
+            Log.e("determinesavecost ", name + Math.abs(System.currentTimeMillis() - time));
+        //}
         time = System.currentTimeMillis();
     }
 }

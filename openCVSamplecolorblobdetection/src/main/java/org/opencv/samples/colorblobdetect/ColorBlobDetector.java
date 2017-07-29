@@ -295,10 +295,6 @@ public class ColorBlobDetector {
                 if (blackCount != 0) {
                     return new Point(blackXSum / blackCount, blackYSum / blackCount);
                 }
-
-                Log.e("no", "black found: " + blackCount);
-
-
             }
         }
         return centerAverage();
